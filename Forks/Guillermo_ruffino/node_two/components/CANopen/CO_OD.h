@@ -5,7 +5,7 @@
    CANopen Object Dictionary.
 
    This file was automatically generated with libedssharp Object
-   Dictionary Editor v0.8-0-gb60f4eb   DON'T EDIT THIS FILE MANUALLY !!!!
+   Dictionary Editor v0.8-31-g22f13fb   DON'T EDIT THIS FILE MANUALLY !!!!
 *******************************************************************************/
 
 
@@ -53,21 +53,21 @@
 
 /*******************************************************************************
    FILE INFO:
-      FileName:     Desaster4.eds
-      FileVersion:  1
-      CreationTime: 12:05PM
-      CreationDate: 03-30-2020
-      CreatedBy:    Alexander Miller, Mathias Parys
-******************************************************************************/
+      FileName:     IO Example
+      FileVersion:  0
+      CreationTime:
+      CreationDate:
+      CreatedBy:    JP
+*******************************************************************************/
 
 
 /*******************************************************************************
    DEVICE INFO:
-      VendorName:     IDiAL IMSL - FH Dortmund
-      VendorNumber    1
-      ProductName:    IMSL-ESP-Desaster4-Node
-      ProductNumber:  1
-******************************************************************************/
+      VendorName:     CANopenNode
+      VendorNumber:   0
+      ProductName:    CANopenNode
+      ProductNumber:  0
+*******************************************************************************/
 
 
 /*******************************************************************************
@@ -80,44 +80,45 @@
   #define CO_NO_SDO_CLIENT               1   //Associated objects: 1280-12FF
   #define CO_NO_LSS_SERVER               0   //LSS Slave
   #define CO_NO_LSS_CLIENT               0   //LSS Master
-  #define CO_NO_RPDO                     5   //Associated objects: 14xx, 16xx
+  #define CO_NO_RPDO                     4   //Associated objects: 14xx, 16xx
   #define CO_NO_TPDO                     4   //Associated objects: 18xx, 1Axx
-  #define CO_NO_NMT_MASTER               1
+  #define CO_NO_NMT_MASTER               0
+  #define CO_NO_TRACE                    0
 
 
 /*******************************************************************************
    OBJECT DICTIONARY
 *******************************************************************************/
-   #define CO_OD_NoOfElements             57
+   #define CO_OD_NoOfElements             56
 
 
 /*******************************************************************************
    TYPE DEFINITIONS FOR RECORDS
 *******************************************************************************/
-/*1018    */ typedef struct {
+/*1018      */ typedef struct {
                UNSIGNED8      maxSubIndex;
                UNSIGNED32     vendorID;
                UNSIGNED32     productCode;
                UNSIGNED32     revisionNumber;
                UNSIGNED32     serialNumber;
                }              OD_identity_t;
-/*1200    */ typedef struct {
+/*1200      */ typedef struct {
                UNSIGNED8      maxSubIndex;
                UNSIGNED32     COB_IDClientToServer;
                UNSIGNED32     COB_IDServerToClient;
                }              OD_SDOServerParameter_t;
-/*1280    */ typedef struct {
+/*1280      */ typedef struct {
                UNSIGNED8      maxSubIndex;
                UNSIGNED32     COB_IDClientToServer;
                UNSIGNED32     COB_IDServerToClient;
                UNSIGNED8      nodeIDOfTheSDOServer;
                }              OD_SDOClientParameter_t;
-/*1400    */ typedef struct {
+/*1400      */ typedef struct {
                UNSIGNED8      maxSubIndex;
                UNSIGNED32     COB_IDUsedByRPDO;
                UNSIGNED8      transmissionType;
                }              OD_RPDOCommunicationParameter_t;
-/*1600    */ typedef struct {
+/*1600      */ typedef struct {
                UNSIGNED8      numberOfMappedObjects;
                UNSIGNED32     mappedObject1;
                UNSIGNED32     mappedObject2;
@@ -128,7 +129,7 @@
                UNSIGNED32     mappedObject7;
                UNSIGNED32     mappedObject8;
                }              OD_RPDOMappingParameter_t;
-/*1800    */ typedef struct {
+/*1800      */ typedef struct {
                UNSIGNED8      maxSubIndex;
                UNSIGNED32     COB_IDUsedByTPDO;
                UNSIGNED8      transmissionType;
@@ -137,7 +138,7 @@
                UNSIGNED16     eventTimer;
                UNSIGNED8      SYNCStartValue;
                }              OD_TPDOCommunicationParameter_t;
-/*1a00    */ typedef struct {
+/*1A00      */ typedef struct {
                UNSIGNED8      numberOfMappedObjects;
                UNSIGNED32     mappedObject1;
                UNSIGNED32     mappedObject2;
@@ -148,11 +149,45 @@
                UNSIGNED32     mappedObject7;
                UNSIGNED32     mappedObject8;
                }              OD_TPDOMappingParameter_t;
+/*2120      */ typedef struct {
+               UNSIGNED8      maxSubIndex;
+               INTEGER64      I64;
+               UNSIGNED64     U64;
+               REAL32         R32;
+               REAL64         R64;
+               DOMAIN         domain;
+               }              OD_testVar_t;
+/*2130      */ typedef struct {
+               UNSIGNED8      maxSubIndex;
+               VISIBLE_STRING string[30];
+               UNSIGNED64     epochTimeBaseMs;
+               UNSIGNED32     epochTimeOffsetMs;
+               }              OD_time_t;
+/*2301      */ typedef struct {
+               UNSIGNED8      maxSubIndex;
+               UNSIGNED32     size;
+               UNSIGNED8      axisNo;
+               VISIBLE_STRING name[30];
+               VISIBLE_STRING color[20];
+               UNSIGNED32     map;
+               UNSIGNED8      format;
+               UNSIGNED8      trigger;
+               INTEGER32      threshold;
+               }              OD_traceConfig_t;
+/*2401      */ typedef struct {
+               UNSIGNED8      maxSubIndex;
+               UNSIGNED32     size;
+               INTEGER32      value;
+               INTEGER32      min;
+               INTEGER32      max;
+               DOMAIN         plot;
+               UNSIGNED32     triggerTime;
+               }              OD_trace_t;
 
 /*******************************************************************************
    TYPE DEFINITIONS FOR OBJECT DICTIONARY INDEXES
 
-   some of those are redundant with CO_SDO.h CO_ObjDicId_t <Common CiA301 object 
+   some of those are redundant with CO_SDO.h CO_ObjDicId_t <Common CiA301 object
    dictionary entries>
 *******************************************************************************/
 /*1000 */
@@ -160,6 +195,9 @@
 
 /*1001 */
         #define OD_1001_errorRegister                               0x1001
+
+/*1002 */
+        #define OD_1002_manufacturerStatusRegister                  0x1002
 
 /*1003 */
         #define OD_1003_preDefinedErrorField                        0x1003
@@ -187,10 +225,22 @@
         #define OD_1008_manufacturerDeviceName                      0x1008
 
 /*1009 */
-        #define OD_1009_hardwareVersion                             0x1009
+        #define OD_1009_manufacturerHardwareVersion                 0x1009
 
-/*100a */
-        #define OD_100a_softwareVersion                             0x100a
+/*100A */
+        #define OD_100A_manufacturerSoftwareVersion                 0x100A
+
+/*1010 */
+        #define OD_1010_storeParameters                             0x1010
+
+        #define OD_1010_0_storeParameters_maxSubIndex               0
+        #define OD_1010_1_storeParameters_saveAllParameters         1
+
+/*1011 */
+        #define OD_1011_restoreDefaultParameters                    0x1011
+
+        #define OD_1011_0_restoreDefaultParameters_maxSubIndex      0
+        #define OD_1011_1_restoreDefaultParameters_restoreAllDefaultParameters 1
 
 /*1014 */
         #define OD_1014_COB_ID_EMCY                                 0x1014
@@ -276,13 +326,6 @@
         #define OD_1403_1_RPDOCommunicationParameter_COB_IDUsedByRPDO 1
         #define OD_1403_2_RPDOCommunicationParameter_transmissionType 2
 
-/*1404 */
-        #define OD_1404_RPDOCommunicationParameter                  0x1404
-
-        #define OD_1404_0_RPDOCommunicationParameter_maxSubIndex    0
-        #define OD_1404_1_RPDOCommunicationParameter_COB_IDUsedByRPDO 1
-        #define OD_1404_2_RPDOCommunicationParameter_transmissionType 2
-
 /*1600 */
         #define OD_1600_RPDOMappingParameter                        0x1600
 
@@ -335,19 +378,6 @@
         #define OD_1603_7_RPDOMappingParameter_mappedObject7        7
         #define OD_1603_8_RPDOMappingParameter_mappedObject8        8
 
-/*1604 */
-        #define OD_1604_RPDOMappingParameter                        0x1604
-
-        #define OD_1604_0_RPDOMappingParameter_maxSubIndex          0
-        #define OD_1604_1_RPDOMappingParameter_mappedObject1        1
-        #define OD_1604_2_RPDOMappingParameter_mappedObject2        2
-        #define OD_1604_3_RPDOMappingParameter_mappedObject3        3
-        #define OD_1604_4_RPDOMappingParameter_mappedObject4        4
-        #define OD_1604_5_RPDOMappingParameter_mappedObject5        5
-        #define OD_1604_6_RPDOMappingParameter_mappedObject6        6
-        #define OD_1604_7_RPDOMappingParameter_mappedObject7        7
-        #define OD_1604_8_RPDOMappingParameter_mappedObject8        8
-
 /*1800 */
         #define OD_1800_TPDOCommunicationParameter                  0x1800
 
@@ -392,154 +422,237 @@
         #define OD_1803_5_TPDOCommunicationParameter_eventTimer     5
         #define OD_1803_6_TPDOCommunicationParameter_SYNCStartValue 6
 
-/*1a00 */
-        #define OD_1a00_TPDOMappingParameter                        0x1a00
+/*1A00 */
+        #define OD_1A00_TPDOMappingParameter                        0x1A00
 
-        #define OD_1a00_0_TPDOMappingParameter_maxSubIndex          0
-        #define OD_1a00_1_TPDOMappingParameter_mappedObject1        1
-        #define OD_1a00_2_TPDOMappingParameter_mappedObject2        2
-        #define OD_1a00_3_TPDOMappingParameter_mappedObject3        3
-        #define OD_1a00_4_TPDOMappingParameter_mappedObject4        4
-        #define OD_1a00_5_TPDOMappingParameter_mappedObject5        5
-        #define OD_1a00_6_TPDOMappingParameter_mappedObject6        6
-        #define OD_1a00_7_TPDOMappingParameter_mappedObject7        7
-        #define OD_1a00_8_TPDOMappingParameter_mappedObject8        8
+        #define OD_1A00_0_TPDOMappingParameter_maxSubIndex          0
+        #define OD_1A00_1_TPDOMappingParameter_mappedObject1        1
+        #define OD_1A00_2_TPDOMappingParameter_mappedObject2        2
+        #define OD_1A00_3_TPDOMappingParameter_mappedObject3        3
+        #define OD_1A00_4_TPDOMappingParameter_mappedObject4        4
+        #define OD_1A00_5_TPDOMappingParameter_mappedObject5        5
+        #define OD_1A00_6_TPDOMappingParameter_mappedObject6        6
+        #define OD_1A00_7_TPDOMappingParameter_mappedObject7        7
+        #define OD_1A00_8_TPDOMappingParameter_mappedObject8        8
 
-/*1a01 */
-        #define OD_1a01_TPDOMappingParameter                        0x1a01
+/*1A01 */
+        #define OD_1A01_TPDOMappingParameter                        0x1A01
 
-        #define OD_1a01_0_TPDOMappingParameter_maxSubIndex          0
-        #define OD_1a01_1_TPDOMappingParameter_mappedObject1        1
-        #define OD_1a01_2_TPDOMappingParameter_mappedObject2        2
-        #define OD_1a01_3_TPDOMappingParameter_mappedObject3        3
-        #define OD_1a01_4_TPDOMappingParameter_mappedObject4        4
-        #define OD_1a01_5_TPDOMappingParameter_mappedObject5        5
-        #define OD_1a01_6_TPDOMappingParameter_mappedObject6        6
-        #define OD_1a01_7_TPDOMappingParameter_mappedObject7        7
-        #define OD_1a01_8_TPDOMappingParameter_mappedObject8        8
+        #define OD_1A01_0_TPDOMappingParameter_maxSubIndex          0
+        #define OD_1A01_1_TPDOMappingParameter_mappedObject1        1
+        #define OD_1A01_2_TPDOMappingParameter_mappedObject2        2
+        #define OD_1A01_3_TPDOMappingParameter_mappedObject3        3
+        #define OD_1A01_4_TPDOMappingParameter_mappedObject4        4
+        #define OD_1A01_5_TPDOMappingParameter_mappedObject5        5
+        #define OD_1A01_6_TPDOMappingParameter_mappedObject6        6
+        #define OD_1A01_7_TPDOMappingParameter_mappedObject7        7
+        #define OD_1A01_8_TPDOMappingParameter_mappedObject8        8
 
-/*1a02 */
-        #define OD_1a02_TPDOMappingParameter                        0x1a02
+/*1A02 */
+        #define OD_1A02_TPDOMappingParameter                        0x1A02
 
-        #define OD_1a02_0_TPDOMappingParameter_maxSubIndex          0
-        #define OD_1a02_1_TPDOMappingParameter_mappedObject1        1
-        #define OD_1a02_2_TPDOMappingParameter_mappedObject2        2
-        #define OD_1a02_3_TPDOMappingParameter_mappedObject3        3
-        #define OD_1a02_4_TPDOMappingParameter_mappedObject4        4
-        #define OD_1a02_5_TPDOMappingParameter_mappedObject5        5
-        #define OD_1a02_6_TPDOMappingParameter_mappedObject6        6
-        #define OD_1a02_7_TPDOMappingParameter_mappedObject7        7
-        #define OD_1a02_8_TPDOMappingParameter_mappedObject8        8
+        #define OD_1A02_0_TPDOMappingParameter_maxSubIndex          0
+        #define OD_1A02_1_TPDOMappingParameter_mappedObject1        1
+        #define OD_1A02_2_TPDOMappingParameter_mappedObject2        2
+        #define OD_1A02_3_TPDOMappingParameter_mappedObject3        3
+        #define OD_1A02_4_TPDOMappingParameter_mappedObject4        4
+        #define OD_1A02_5_TPDOMappingParameter_mappedObject5        5
+        #define OD_1A02_6_TPDOMappingParameter_mappedObject6        6
+        #define OD_1A02_7_TPDOMappingParameter_mappedObject7        7
+        #define OD_1A02_8_TPDOMappingParameter_mappedObject8        8
 
-/*1a03 */
-        #define OD_1a03_TPDOMappingParameter                        0x1a03
+/*1A03 */
+        #define OD_1A03_TPDOMappingParameter                        0x1A03
 
-        #define OD_1a03_0_TPDOMappingParameter_maxSubIndex          0
-        #define OD_1a03_1_TPDOMappingParameter_mappedObject1        1
-        #define OD_1a03_2_TPDOMappingParameter_mappedObject2        2
-        #define OD_1a03_3_TPDOMappingParameter_mappedObject3        3
-        #define OD_1a03_4_TPDOMappingParameter_mappedObject4        4
-        #define OD_1a03_5_TPDOMappingParameter_mappedObject5        5
-        #define OD_1a03_6_TPDOMappingParameter_mappedObject6        6
-        #define OD_1a03_7_TPDOMappingParameter_mappedObject7        7
-        #define OD_1a03_8_TPDOMappingParameter_mappedObject8        8
+        #define OD_1A03_0_TPDOMappingParameter_maxSubIndex          0
+        #define OD_1A03_1_TPDOMappingParameter_mappedObject1        1
+        #define OD_1A03_2_TPDOMappingParameter_mappedObject2        2
+        #define OD_1A03_3_TPDOMappingParameter_mappedObject3        3
+        #define OD_1A03_4_TPDOMappingParameter_mappedObject4        4
+        #define OD_1A03_5_TPDOMappingParameter_mappedObject5        5
+        #define OD_1A03_6_TPDOMappingParameter_mappedObject6        6
+        #define OD_1A03_7_TPDOMappingParameter_mappedObject7        7
+        #define OD_1A03_8_TPDOMappingParameter_mappedObject8        8
 
-/*1f80 */
-        #define OD_1f80_NMTStartup                                  0x1f80
+/*1F80 */
+        #define OD_1F80_NMTStartup                                  0x1F80
 
 /*2100 */
         #define OD_2100_errorStatusBits                             0x2100
 
+/*2101 */
+        #define OD_2101_CANNodeID                                   0x2101
+
+/*2102 */
+        #define OD_2102_CANBitRate                                  0x2102
+
+/*2103 */
+        #define OD_2103_SYNCCounter                                 0x2103
+
+/*2104 */
+        #define OD_2104_SYNCTime                                    0x2104
+
+/*2106 */
+        #define OD_2106_powerOnCounter                              0x2106
+
+/*2107 */
+        #define OD_2107_performance                                 0x2107
+
+        #define OD_2107_0_performance_maxSubIndex                   0
+        #define OD_2107_1_performance_cyclesPerSecond               1
+        #define OD_2107_2_performance_timerCycleTime                2
+        #define OD_2107_3_performance_timerCycleMaxTime             3
+        #define OD_2107_4_performance_mainCycleTime                 4
+        #define OD_2107_5_performance_mainCycleMaxTime              5
+
+/*2108 */
+        #define OD_2108_temperature                                 0x2108
+
+        #define OD_2108_0_temperature_maxSubIndex                   0
+        #define OD_2108_1_temperature_mainPCB                       1
+
+/*2109 */
+        #define OD_2109_voltage                                     0x2109
+
+        #define OD_2109_0_voltage_maxSubIndex                       0
+        #define OD_2109_1_voltage_mainPCBSupply                     1
+
+/*2110 */
+        #define OD_2110_variableInt32                               0x2110
+
+        #define OD_2110_0_variableInt32_maxSubIndex                 0
+        #define OD_2110_1_variableInt32_int32                       1
+        #define OD_2110_2_variableInt32_int32                       2
+        #define OD_2110_3_variableInt32_int32                       3
+        #define OD_2110_4_variableInt32_int32                       4
+        #define OD_2110_5_variableInt32_int32                       5
+        #define OD_2110_6_variableInt32_int32                       6
+        #define OD_2110_7_variableInt32_int32                       7
+        #define OD_2110_8_variableInt32_int32                       8
+        #define OD_2110_9_variableInt32_int32                       9
+        #define OD_2110_10_variableInt32_int32                      10
+        #define OD_2110_11_variableInt32_int32                      11
+        #define OD_2110_12_variableInt32_int32                      12
+        #define OD_2110_13_variableInt32_int32                      13
+        #define OD_2110_14_variableInt32_int32                      14
+        #define OD_2110_15_variableInt32_int32                      15
+        #define OD_2110_16_variableInt32_int32                      16
+
+/*2111 */
+        #define OD_2111_variableROM_Int32                           0x2111
+
+        #define OD_2111_0_variableROM_Int32_maxSubIndex             0
+        #define OD_2111_1_variableROM_Int32_int32                   1
+        #define OD_2111_2_variableROM_Int32_int32                   2
+        #define OD_2111_3_variableROM_Int32_int32                   3
+        #define OD_2111_4_variableROM_Int32_int32                   4
+        #define OD_2111_5_variableROM_Int32_int32                   5
+        #define OD_2111_6_variableROM_Int32_int32                   6
+        #define OD_2111_7_variableROM_Int32_int32                   7
+        #define OD_2111_8_variableROM_Int32_int32                   8
+        #define OD_2111_9_variableROM_Int32_int32                   9
+        #define OD_2111_10_variableROM_Int32_int32                  10
+        #define OD_2111_11_variableROM_Int32_int32                  11
+        #define OD_2111_12_variableROM_Int32_int32                  12
+        #define OD_2111_13_variableROM_Int32_int32                  13
+        #define OD_2111_14_variableROM_Int32_int32                  14
+        #define OD_2111_15_variableROM_Int32_int32                  15
+        #define OD_2111_16_variableROM_Int32_int32                  16
+
+/*2112 */
+        #define OD_2112_variableNV_Int32                            0x2112
+
+        #define OD_2112_0_variableNV_Int32_maxSubIndex              0
+        #define OD_2112_1_variableNV_Int32_int32                    1
+        #define OD_2112_2_variableNV_Int32_int32                    2
+        #define OD_2112_3_variableNV_Int32_int32                    3
+        #define OD_2112_4_variableNV_Int32_int32                    4
+        #define OD_2112_5_variableNV_Int32_int32                    5
+        #define OD_2112_6_variableNV_Int32_int32                    6
+        #define OD_2112_7_variableNV_Int32_int32                    7
+        #define OD_2112_8_variableNV_Int32_int32                    8
+        #define OD_2112_9_variableNV_Int32_int32                    9
+        #define OD_2112_10_variableNV_Int32_int32                   10
+        #define OD_2112_11_variableNV_Int32_int32                   11
+        #define OD_2112_12_variableNV_Int32_int32                   12
+        #define OD_2112_13_variableNV_Int32_int32                   13
+        #define OD_2112_14_variableNV_Int32_int32                   14
+        #define OD_2112_15_variableNV_Int32_int32                   15
+        #define OD_2112_16_variableNV_Int32_int32                   16
+
+/*2120 */
+        #define OD_2120_testVar                                     0x2120
+
+        #define OD_2120_0_testVar_maxSubIndex                       0
+        #define OD_2120_1_testVar_I64                               1
+        #define OD_2120_2_testVar_U64                               2
+        #define OD_2120_3_testVar_R32                               3
+        #define OD_2120_4_testVar_R64                               4
+        #define OD_2120_5_testVar_domain                            5
+
+/*2130 */
+        #define OD_2130_time                                        0x2130
+
+        #define OD_2130_0_time_maxSubIndex                          0
+        #define OD_2130_1_time_string                               1
+        #define OD_2130_2_time_epochTimeBaseMs                      2
+        #define OD_2130_3_time_epochTimeOffsetMs                    3
+
 /*6000 */
-        #define OD_6000_gyro_status_register                        0x6000
+        #define OD_6000_readInput8Bit                               0x6000
 
-        #define OD_6000_0_gyro_status_register_maxSubIndex          0
-        #define OD_6000_1_gyro_status_register_status               1
-
-/*6001 */
-        #define OD_6001_gyro_command_register                       0x6001
-
-        #define OD_6001_0_gyro_command_register_maxSubIndex         0
-        #define OD_6001_1_gyro_command_register_command             1
-
-/*6002 */
-        #define OD_6002_gyro_temperature_register                   0x6002
-
-        #define OD_6002_0_gyro_temperature_register_maxSubIndex     0
-        #define OD_6002_1_gyro_temperature_register_temperature     1
-
-/*6003 */
-        #define OD_6003_gyro_angle_register                         0x6003
-
-        #define OD_6003_0_gyro_angle_register_maxSubIndex           0
-        #define OD_6003_1_gyro_angle_register_angle                 1
-
-/*6004 */
-        #define OD_6004_gyro_lifecounter_register                   0x6004
-
-        #define OD_6004_0_gyro_lifecounter_register_maxSubIndex     0
-        #define OD_6004_1_gyro_lifecounter_register_lifecounter     1
-
-/*6100 */
-        #define OD_6100_hatox_status_register                       0x6100
-
-        #define OD_6100_0_hatox_status_register_maxSubIndex         0
-        #define OD_6100_1_hatox_status_register_analog_data_0       1
-        #define OD_6100_2_hatox_status_register_analog_data_1       2
-        #define OD_6100_3_hatox_status_register_analog_data_2       3
-        #define OD_6100_4_hatox_status_register_analog_data_3       4
-        #define OD_6100_5_hatox_status_register_analog_data_4       5
-        #define OD_6100_6_hatox_status_register_digital_data_0      6
-        #define OD_6100_7_hatox_status_register_digital_data_1      7
-
-/*6101 */
-        #define OD_6101_hatox_command_register                      0x6101
-
-        #define OD_6101_0_hatox_command_register_maxSubIndex        0
-        #define OD_6101_1_hatox_command_register_line               1
-        #define OD_6101_2_hatox_command_register_column             2
-        #define OD_6101_3_hatox_command_register_char_0             3
-        #define OD_6101_4_hatox_command_register_char_1             4
-        #define OD_6101_5_hatox_command_register_char_2             5
-        #define OD_6101_6_hatox_command_register_char_3             6
-        #define OD_6101_7_hatox_command_register_char_4             7
-        #define OD_6101_8_hatox_command_register_char_5             8
+        #define OD_6000_0_readInput8Bit_maxSubIndex                 0
+        #define OD_6000_1_readInput8Bit_input                       1
+        #define OD_6000_2_readInput8Bit_input                       2
+        #define OD_6000_3_readInput8Bit_input                       3
+        #define OD_6000_4_readInput8Bit_input                       4
+        #define OD_6000_5_readInput8Bit_input                       5
+        #define OD_6000_6_readInput8Bit_input                       6
+        #define OD_6000_7_readInput8Bit_input                       7
+        #define OD_6000_8_readInput8Bit_input                       8
 
 /*6200 */
-        #define OD_6200_motor_0_device_command                      0x6200
+        #define OD_6200_writeOutput8Bit                             0x6200
 
-/*6201 */
-        #define OD_6201_motor_0_error_register                      0x6201
+        #define OD_6200_0_writeOutput8Bit_maxSubIndex               0
+        #define OD_6200_1_writeOutput8Bit_output                    1
+        #define OD_6200_2_writeOutput8Bit_output                    2
+        #define OD_6200_3_writeOutput8Bit_output                    3
+        #define OD_6200_4_writeOutput8Bit_output                    4
+        #define OD_6200_5_writeOutput8Bit_output                    5
+        #define OD_6200_6_writeOutput8Bit_output                    6
+        #define OD_6200_7_writeOutput8Bit_output                    7
+        #define OD_6200_8_writeOutput8Bit_output                    8
 
-/*6202 */
-        #define OD_6202_motor_0_status_register                     0x6202
+/*6401 */
+        #define OD_6401_readAnalogueInput16Bit                      0x6401
 
-/*6203 */
-        #define OD_6203_motor_0_mode_of_operation                   0x6203
+        #define OD_6401_0_readAnalogueInput16Bit_maxSubIndex        0
+        #define OD_6401_1_readAnalogueInput16Bit_input              1
+        #define OD_6401_2_readAnalogueInput16Bit_input              2
+        #define OD_6401_3_readAnalogueInput16Bit_input              3
+        #define OD_6401_4_readAnalogueInput16Bit_input              4
+        #define OD_6401_5_readAnalogueInput16Bit_input              5
+        #define OD_6401_6_readAnalogueInput16Bit_input              6
+        #define OD_6401_7_readAnalogueInput16Bit_input              7
+        #define OD_6401_8_readAnalogueInput16Bit_input              8
+        #define OD_6401_9_readAnalogueInput16Bit_input              9
+        #define OD_6401_10_readAnalogueInput16Bit_input             10
+        #define OD_6401_11_readAnalogueInput16Bit_input             11
+        #define OD_6401_12_readAnalogueInput16Bit_input             12
 
-/*6204 */
-        #define OD_6204_motor_0_power_enable                        0x6204
+/*6411 */
+        #define OD_6411_writeAnalogueOutput16Bit                    0x6411
 
-/*6205 */
-        #define OD_6205_motor_0_velocity_target_value               0x6205
-
-/*6300 */
-        #define OD_6300_motor_1_device_command                      0x6300
-
-/*6301 */
-        #define OD_6301_motor_1_error_register                      0x6301
-
-/*6302 */
-        #define OD_6302_motor_1_status_register                     0x6302
-
-/*6303 */
-        #define OD_6303_motor_1_mode_of_operation                   0x6303
-
-/*6304 */
-        #define OD_6304_motor_1_power_enable                        0x6304
-
-/*6305 */
-        #define OD_6305_motor_1_velocity_target_value               0x6305
+        #define OD_6411_0_writeAnalogueOutput16Bit_maxSubIndex      0
+        #define OD_6411_1_writeAnalogueOutput16Bit_output           1
+        #define OD_6411_2_writeAnalogueOutput16Bit_output           2
+        #define OD_6411_3_writeAnalogueOutput16Bit_output           3
+        #define OD_6411_4_writeAnalogueOutput16Bit_output           4
+        #define OD_6411_5_writeAnalogueOutput16Bit_output           5
+        #define OD_6411_6_writeAnalogueOutput16Bit_output           6
+        #define OD_6411_7_writeAnalogueOutput16Bit_output           7
+        #define OD_6411_8_writeAnalogueOutput16Bit_output           8
 
 /*******************************************************************************
    STRUCTURES FOR VARIABLES IN DIFFERENT MEMORY LOCATIONS
@@ -550,10 +663,29 @@
 struct sCO_OD_ROM{
                UNSIGNED32     FirstWord;
 
-/*1400      */ OD_RPDOCommunicationParameter_t RPDOCommunicationParameter[5];
-/*1600      */ OD_RPDOMappingParameter_t RPDOMappingParameter[5];
+/*1000      */ UNSIGNED32     deviceType;
+/*1005      */ UNSIGNED32     COB_ID_SYNCMessage;
+/*1006      */ UNSIGNED32     communicationCyclePeriod;
+/*1007      */ UNSIGNED32     synchronousWindowLength;
+/*1008      */ VISIBLE_STRING manufacturerDeviceName[11];
+/*1009      */ VISIBLE_STRING manufacturerHardwareVersion[4];
+/*100A      */ VISIBLE_STRING manufacturerSoftwareVersion[4];
+/*1014      */ UNSIGNED32     COB_ID_EMCY;
+/*1015      */ UNSIGNED16     inhibitTimeEMCY;
+/*1016      */ UNSIGNED32      consumerHeartbeatTime[4];
+/*1017      */ UNSIGNED16     producerHeartbeatTime;
+/*1018      */ OD_identity_t   identity;
+/*1019      */ UNSIGNED8      synchronousCounterOverflowValue;
+/*1029      */ UNSIGNED8       errorBehavior[6];
+/*1200      */ OD_SDOServerParameter_t SDOServerParameter[1];
+/*1400      */ OD_RPDOCommunicationParameter_t RPDOCommunicationParameter[4];
+/*1600      */ OD_RPDOMappingParameter_t RPDOMappingParameter[4];
 /*1800      */ OD_TPDOCommunicationParameter_t TPDOCommunicationParameter[4];
-/*1a00      */ OD_TPDOMappingParameter_t TPDOMappingParameter[4];
+/*1A00      */ OD_TPDOMappingParameter_t TPDOMappingParameter[4];
+/*1F80      */ UNSIGNED32     NMTStartup;
+/*2101      */ UNSIGNED8      CANNodeID;
+/*2102      */ UNSIGNED16     CANBitRate;
+/*2111      */ INTEGER32       variableROM_Int32[16];
 
                UNSIGNED32     LastWord;
 };
@@ -562,45 +694,25 @@ struct sCO_OD_ROM{
 struct sCO_OD_RAM{
                UNSIGNED32     FirstWord;
 
-/*1000      */ UNSIGNED32      deviceType;
-/*1001      */ UNSIGNED8       errorRegister;
+/*1001      */ UNSIGNED8      errorRegister;
+/*1002      */ UNSIGNED32     manufacturerStatusRegister;
 /*1003      */ UNSIGNED32      preDefinedErrorField[8];
-/*1005      */ UNSIGNED32      COB_ID_SYNCMessage;
-/*1006      */ UNSIGNED32      communicationCyclePeriod;
-/*1007      */ UNSIGNED32      synchronousWindowLength;
-/*1008      */ VISIBLE_STRING  manufacturerDeviceName[13];
-/*1009      */ VISIBLE_STRING  hardwareVersion[4];
-/*100a      */ VISIBLE_STRING  softwareVersion[4];
-/*1014      */ UNSIGNED32      COB_ID_EMCY;
-/*1015      */ UNSIGNED16      inhibitTimeEMCY;
-/*1016      */ UNSIGNED32      consumerHeartbeatTime[4];
-/*1017      */ UNSIGNED16      producerHeartbeatTime;
-/*1018      */ OD_identity_t   identity;
-/*1019      */ UNSIGNED8       synchronousCounterOverflowValue;
-/*1029      */ UNSIGNED8       errorBehavior[6];
-/*1200      */ OD_SDOServerParameter_t SDOServerParameter[1];
+/*1010      */ UNSIGNED32      storeParameters[1];
+/*1011      */ UNSIGNED32      restoreDefaultParameters[1];
 /*1280      */ OD_SDOClientParameter_t SDOClientParameter[1];
-/*1f80      */ UNSIGNED32      NMTStartup;
-/*2100      */ OCTET_STRING    errorStatusBits[10];
-/*6000      */ UNSIGNED8       gyro_status_register[1];
-/*6001      */ UNSIGNED8       gyro_command_register[1];
-/*6002      */ INTEGER16       gyro_temperature_register[1];
-/*6003      */ REAL32          gyro_angle_register[1];
-/*6004      */ UNSIGNED8       gyro_lifecounter_register[1];
-/*6100      */ UNSIGNED8       hatox_status_register[7];
-/*6101      */ UNSIGNED8       hatox_command_register[8];
-/*6200      */ UNSIGNED8       motor_0_device_command;
-/*6201      */ INTEGER16       motor_0_error_register;
-/*6202      */ UNSIGNED32      motor_0_status_register;
-/*6203      */ UNSIGNED8       motor_0_mode_of_operation;
-/*6204      */ UNSIGNED8       motor_0_power_enable;
-/*6205      */ INTEGER32       motor_0_velocity_target_value;
-/*6300      */ UNSIGNED8       motor_1_device_command;
-/*6301      */ INTEGER16       motor_1_error_register;
-/*6302      */ UNSIGNED32      motor_1_status_register;
-/*6303      */ UNSIGNED8       motor_1_mode_of_operation;
-/*6304      */ UNSIGNED8       motor_1_power_enable;
-/*6305      */ INTEGER32       motor_1_velocity_target_value;
+/*2100      */ OCTET_STRING   errorStatusBits[10];
+/*2103      */ UNSIGNED16     SYNCCounter;
+/*2104      */ UNSIGNED16     SYNCTime;
+/*2107      */ UNSIGNED16      performance[5];
+/*2108      */ INTEGER16       temperature[1];
+/*2109      */ INTEGER16       voltage[1];
+/*2110      */ INTEGER32       variableInt32[16];
+/*2120      */ OD_testVar_t    testVar;
+/*2130      */ OD_time_t       time;
+/*6000      */ UNSIGNED8       readInput8Bit[8];
+/*6200      */ UNSIGNED8       writeOutput8Bit[8];
+/*6401      */ INTEGER16       readAnalogueInput16Bit[12];
+/*6411      */ INTEGER16       writeAnalogueOutput16Bit[8];
 
                UNSIGNED32     LastWord;
 };
@@ -609,6 +721,8 @@ struct sCO_OD_RAM{
 struct sCO_OD_EEPROM{
                UNSIGNED32     FirstWord;
 
+/*2106      */ UNSIGNED32     powerOnCounter;
+/*2112      */ INTEGER32       variableNV_Int32[16];
 
                UNSIGNED32     LastWord;
 };
@@ -624,10 +738,13 @@ extern struct sCO_OD_EEPROM CO_OD_EEPROM;
    ALIASES FOR OBJECT DICTIONARY VARIABLES
 *******************************************************************************/
 /*1000, Data Type: UNSIGNED32 */
-        #define OD_deviceType                                       CO_OD_RAM.deviceType
+        #define OD_deviceType                                       CO_OD_ROM.deviceType
 
 /*1001, Data Type: UNSIGNED8 */
         #define OD_errorRegister                                    CO_OD_RAM.errorRegister
+
+/*1002, Data Type: UNSIGNED32 */
+        #define OD_manufacturerStatusRegister                       CO_OD_RAM.manufacturerStatusRegister
 
 /*1003, Data Type: UNSIGNED32, Array[8] */
         #define OD_preDefinedErrorField                             CO_OD_RAM.preDefinedErrorField
@@ -635,48 +752,58 @@ extern struct sCO_OD_EEPROM CO_OD_EEPROM;
         #define ODA_preDefinedErrorField_standardErrorField         0
 
 /*1005, Data Type: UNSIGNED32 */
-        #define OD_COB_ID_SYNCMessage                               CO_OD_RAM.COB_ID_SYNCMessage
+        #define OD_COB_ID_SYNCMessage                               CO_OD_ROM.COB_ID_SYNCMessage
 
 /*1006, Data Type: UNSIGNED32 */
-        #define OD_communicationCyclePeriod                         CO_OD_RAM.communicationCyclePeriod
+        #define OD_communicationCyclePeriod                         CO_OD_ROM.communicationCyclePeriod
 
 /*1007, Data Type: UNSIGNED32 */
-        #define OD_synchronousWindowLength                          CO_OD_RAM.synchronousWindowLength
+        #define OD_synchronousWindowLength                          CO_OD_ROM.synchronousWindowLength
 
 /*1008, Data Type: VISIBLE_STRING */
-        #define OD_manufacturerDeviceName                           CO_OD_RAM.manufacturerDeviceName
-        #define ODL_manufacturerDeviceName_stringLength             13
+        #define OD_manufacturerDeviceName                           CO_OD_ROM.manufacturerDeviceName
+        #define ODL_manufacturerDeviceName_stringLength             11
 
 /*1009, Data Type: VISIBLE_STRING */
-        #define OD_hardwareVersion                                  CO_OD_RAM.hardwareVersion
-        #define ODL_hardwareVersion_stringLength                    4
+        #define OD_manufacturerHardwareVersion                      CO_OD_ROM.manufacturerHardwareVersion
+        #define ODL_manufacturerHardwareVersion_stringLength        4
 
-/*100a, Data Type: VISIBLE_STRING */
-        #define OD_softwareVersion                                  CO_OD_RAM.softwareVersion
-        #define ODL_softwareVersion_stringLength                    4
+/*100A, Data Type: VISIBLE_STRING */
+        #define OD_manufacturerSoftwareVersion                      CO_OD_ROM.manufacturerSoftwareVersion
+        #define ODL_manufacturerSoftwareVersion_stringLength        4
+
+/*1010, Data Type: UNSIGNED32, Array[1] */
+        #define OD_storeParameters                                  CO_OD_RAM.storeParameters
+        #define ODL_storeParameters_arrayLength                     1
+        #define ODA_storeParameters_saveAllParameters               0
+
+/*1011, Data Type: UNSIGNED32, Array[1] */
+        #define OD_restoreDefaultParameters                         CO_OD_RAM.restoreDefaultParameters
+        #define ODL_restoreDefaultParameters_arrayLength            1
+        #define ODA_restoreDefaultParameters_restoreAllDefaultParameters 0
 
 /*1014, Data Type: UNSIGNED32 */
-        #define OD_COB_ID_EMCY                                      CO_OD_RAM.COB_ID_EMCY
+        #define OD_COB_ID_EMCY                                      CO_OD_ROM.COB_ID_EMCY
 
 /*1015, Data Type: UNSIGNED16 */
-        #define OD_inhibitTimeEMCY                                  CO_OD_RAM.inhibitTimeEMCY
+        #define OD_inhibitTimeEMCY                                  CO_OD_ROM.inhibitTimeEMCY
 
 /*1016, Data Type: UNSIGNED32, Array[4] */
-        #define OD_consumerHeartbeatTime                            CO_OD_RAM.consumerHeartbeatTime
+        #define OD_consumerHeartbeatTime                            CO_OD_ROM.consumerHeartbeatTime
         #define ODL_consumerHeartbeatTime_arrayLength               4
         #define ODA_consumerHeartbeatTime_consumerHeartbeatTime     0
 
 /*1017, Data Type: UNSIGNED16 */
-        #define OD_producerHeartbeatTime                            CO_OD_RAM.producerHeartbeatTime
+        #define OD_producerHeartbeatTime                            CO_OD_ROM.producerHeartbeatTime
 
 /*1018, Data Type: identity_t */
-        #define OD_identity                                         CO_OD_RAM.identity
+        #define OD_identity                                         CO_OD_ROM.identity
 
 /*1019, Data Type: UNSIGNED8 */
-        #define OD_synchronousCounterOverflowValue                  CO_OD_RAM.synchronousCounterOverflowValue
+        #define OD_synchronousCounterOverflowValue                  CO_OD_ROM.synchronousCounterOverflowValue
 
 /*1029, Data Type: UNSIGNED8, Array[6] */
-        #define OD_errorBehavior                                    CO_OD_RAM.errorBehavior
+        #define OD_errorBehavior                                    CO_OD_ROM.errorBehavior
         #define ODL_errorBehavior_arrayLength                       6
         #define ODA_errorBehavior_communication                     0
         #define ODA_errorBehavior_communicationOther                1
@@ -686,7 +813,7 @@ extern struct sCO_OD_EEPROM CO_OD_EEPROM;
         #define ODA_errorBehavior_manufacturerSpecific              5
 
 /*1200, Data Type: SDOServerParameter_t */
-        #define OD_SDOServerParameter                               CO_OD_RAM.SDOServerParameter
+        #define OD_SDOServerParameter                               CO_OD_ROM.SDOServerParameter
 
 /*1280, Data Type: SDOClientParameter_t */
         #define OD_SDOClientParameter                               CO_OD_RAM.SDOClientParameter
@@ -700,99 +827,90 @@ extern struct sCO_OD_EEPROM CO_OD_EEPROM;
 /*1800, Data Type: TPDOCommunicationParameter_t */
         #define OD_TPDOCommunicationParameter                       CO_OD_ROM.TPDOCommunicationParameter
 
-/*1a00, Data Type: TPDOMappingParameter_t */
+/*1A00, Data Type: TPDOMappingParameter_t */
         #define OD_TPDOMappingParameter                             CO_OD_ROM.TPDOMappingParameter
 
-/*1f80, Data Type: UNSIGNED32 */
-        #define OD_NMTStartup                                       CO_OD_RAM.NMTStartup
+/*1F80, Data Type: UNSIGNED32 */
+        #define OD_NMTStartup                                       CO_OD_ROM.NMTStartup
 
 /*2100, Data Type: OCTET_STRING */
         #define OD_errorStatusBits                                  CO_OD_RAM.errorStatusBits
         #define ODL_errorStatusBits_stringLength                    10
 
-/*6000, Data Type: UNSIGNED8, Array[1] */
-        #define OD_gyro_status_register                             CO_OD_RAM.gyro_status_register
-        #define ODL_gyro_status_register_arrayLength                1
-        #define ODA_gyro_status_register_status                     0
+/*2101, Data Type: UNSIGNED8 */
+        #define OD_CANNodeID                                        CO_OD_ROM.CANNodeID
 
-/*6001, Data Type: UNSIGNED8, Array[1] */
-        #define OD_gyro_command_register                            CO_OD_RAM.gyro_command_register
-        #define ODL_gyro_command_register_arrayLength               1
-        #define ODA_gyro_command_register_command                   0
+/*2102, Data Type: UNSIGNED16 */
+        #define OD_CANBitRate                                       CO_OD_ROM.CANBitRate
 
-/*6002, Data Type: INTEGER16, Array[1] */
-        #define OD_gyro_temperature_register                        CO_OD_RAM.gyro_temperature_register
-        #define ODL_gyro_temperature_register_arrayLength           1
-        #define ODA_gyro_temperature_register_temperature           0
+/*2103, Data Type: UNSIGNED16 */
+        #define OD_SYNCCounter                                      CO_OD_RAM.SYNCCounter
 
-/*6003, Data Type: REAL32, Array[1] */
-        #define OD_gyro_angle_register                              CO_OD_RAM.gyro_angle_register
-        #define ODL_gyro_angle_register_arrayLength                 1
-        #define ODA_gyro_angle_register_angle                       0
+/*2104, Data Type: UNSIGNED16 */
+        #define OD_SYNCTime                                         CO_OD_RAM.SYNCTime
 
-/*6004, Data Type: UNSIGNED8, Array[1] */
-        #define OD_gyro_lifecounter_register                        CO_OD_RAM.gyro_lifecounter_register
-        #define ODL_gyro_lifecounter_register_arrayLength           1
-        #define ODA_gyro_lifecounter_register_lifecounter           0
+/*2106, Data Type: UNSIGNED32 */
+        #define OD_powerOnCounter                                   CO_OD_EEPROM.powerOnCounter
 
-/*6100, Data Type: UNSIGNED8, Array[7] */
-        #define OD_hatox_status_register                            CO_OD_RAM.hatox_status_register
-        #define ODL_hatox_status_register_arrayLength               7
-        #define ODA_hatox_status_register_analog_data_0             0
-        #define ODA_hatox_status_register_analog_data_1             1
-        #define ODA_hatox_status_register_analog_data_2             2
-        #define ODA_hatox_status_register_analog_data_3             3
-        #define ODA_hatox_status_register_analog_data_4             4
-        #define ODA_hatox_status_register_digital_data_0            5
-        #define ODA_hatox_status_register_digital_data_1            6
+/*2107, Data Type: UNSIGNED16, Array[5] */
+        #define OD_performance                                      CO_OD_RAM.performance
+        #define ODL_performance_arrayLength                         5
+        #define ODA_performance_cyclesPerSecond                     0
+        #define ODA_performance_timerCycleTime                      1
+        #define ODA_performance_timerCycleMaxTime                   2
+        #define ODA_performance_mainCycleTime                       3
+        #define ODA_performance_mainCycleMaxTime                    4
 
-/*6101, Data Type: UNSIGNED8, Array[8] */
-        #define OD_hatox_command_register                           CO_OD_RAM.hatox_command_register
-        #define ODL_hatox_command_register_arrayLength              8
-        #define ODA_hatox_command_register_line                     0
-        #define ODA_hatox_command_register_column                   1
-        #define ODA_hatox_command_register_char_0                   2
-        #define ODA_hatox_command_register_char_1                   3
-        #define ODA_hatox_command_register_char_2                   4
-        #define ODA_hatox_command_register_char_3                   5
-        #define ODA_hatox_command_register_char_4                   6
-        #define ODA_hatox_command_register_char_5                   7
+/*2108, Data Type: INTEGER16, Array[1] */
+        #define OD_temperature                                      CO_OD_RAM.temperature
+        #define ODL_temperature_arrayLength                         1
+        #define ODA_temperature_mainPCB                             0
 
-/*6200, Data Type: UNSIGNED8 */
-        #define OD_motor_0_device_command                           CO_OD_RAM.motor_0_device_command
+/*2109, Data Type: INTEGER16, Array[1] */
+        #define OD_voltage                                          CO_OD_RAM.voltage
+        #define ODL_voltage_arrayLength                             1
+        #define ODA_voltage_mainPCBSupply                           0
 
-/*6201, Data Type: INTEGER16 */
-        #define OD_motor_0_error_register                           CO_OD_RAM.motor_0_error_register
+/*2110, Data Type: INTEGER32, Array[16] */
+        #define OD_variableInt32                                    CO_OD_RAM.variableInt32
+        #define ODL_variableInt32_arrayLength                       16
+        #define ODA_variableInt32_int32                             0
 
-/*6202, Data Type: UNSIGNED32 */
-        #define OD_motor_0_status_register                          CO_OD_RAM.motor_0_status_register
+/*2111, Data Type: INTEGER32, Array[16] */
+        #define OD_variableROM_Int32                                CO_OD_ROM.variableROM_Int32
+        #define ODL_variableROM_Int32_arrayLength                   16
+        #define ODA_variableROM_Int32_int32                         0
 
-/*6203, Data Type: UNSIGNED8 */
-        #define OD_motor_0_mode_of_operation                        CO_OD_RAM.motor_0_mode_of_operation
+/*2112, Data Type: INTEGER32, Array[16] */
+        #define OD_variableNV_Int32                                 CO_OD_EEPROM.variableNV_Int32
+        #define ODL_variableNV_Int32_arrayLength                    16
+        #define ODA_variableNV_Int32_int32                          0
 
-/*6204, Data Type: UNSIGNED8 */
-        #define OD_motor_0_power_enable                             CO_OD_RAM.motor_0_power_enable
+/*2120, Data Type: testVar_t */
+        #define OD_testVar                                          CO_OD_RAM.testVar
 
-/*6205, Data Type: INTEGER32 */
-        #define OD_motor_0_velocity_target_value                    CO_OD_RAM.motor_0_velocity_target_value
+/*2130, Data Type: time_t */
+        #define OD_time                                             CO_OD_RAM.time
 
-/*6300, Data Type: UNSIGNED8 */
-        #define OD_motor_1_device_command                           CO_OD_RAM.motor_1_device_command
+/*6000, Data Type: UNSIGNED8, Array[8] */
+        #define OD_readInput8Bit                                    CO_OD_RAM.readInput8Bit
+        #define ODL_readInput8Bit_arrayLength                       8
+        #define ODA_readInput8Bit_input                             0
 
-/*6301, Data Type: INTEGER16 */
-        #define OD_motor_1_error_register                           CO_OD_RAM.motor_1_error_register
+/*6200, Data Type: UNSIGNED8, Array[8] */
+        #define OD_writeOutput8Bit                                  CO_OD_RAM.writeOutput8Bit
+        #define ODL_writeOutput8Bit_arrayLength                     8
+        #define ODA_writeOutput8Bit_output                          0
 
-/*6302, Data Type: UNSIGNED32 */
-        #define OD_motor_1_status_register                          CO_OD_RAM.motor_1_status_register
+/*6401, Data Type: INTEGER16, Array[12] */
+        #define OD_readAnalogueInput16Bit                           CO_OD_RAM.readAnalogueInput16Bit
+        #define ODL_readAnalogueInput16Bit_arrayLength              12
+        #define ODA_readAnalogueInput16Bit_input                    0
 
-/*6303, Data Type: UNSIGNED8 */
-        #define OD_motor_1_mode_of_operation                        CO_OD_RAM.motor_1_mode_of_operation
-
-/*6304, Data Type: UNSIGNED8 */
-        #define OD_motor_1_power_enable                             CO_OD_RAM.motor_1_power_enable
-
-/*6305, Data Type: INTEGER32 */
-        #define OD_motor_1_velocity_target_value                    CO_OD_RAM.motor_1_velocity_target_value
+/*6411, Data Type: INTEGER16, Array[8] */
+        #define OD_writeAnalogueOutput16Bit                         CO_OD_RAM.writeAnalogueOutput16Bit
+        #define ODL_writeAnalogueOutput16Bit_arrayLength            8
+        #define ODA_writeAnalogueOutput16Bit_output                 0
 
 #endif
 // clang-format on

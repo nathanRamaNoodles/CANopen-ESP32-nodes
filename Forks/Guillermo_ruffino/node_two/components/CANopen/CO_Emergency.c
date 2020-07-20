@@ -24,12 +24,14 @@
  */
 
 
+#include <string.h>
+
 #include "CO_driver.h"
-#include "CO_SDO.h"
+#include "CO_SDOserver.h"
 #include "CO_Emergency.h"
-#include "CANopen.h"
 
 
+#if (CO_CONFIG_EM) & CO_CONFIG_EM_CONSUMER
 /*
  * Read received message from CAN module.
  *
@@ -37,28 +39,35 @@
  * message with correct identifier will be received. For more information and
  * description of parameters see file CO_driver.h.
  */
-static void CO_EM_receive(void *object, const CO_CANrxMsg_t *msg){
+static void CO_EM_receive(void *object, void *msg) {
     CO_EM_t *em;
-    uint16_t errorCode;
-    uint32_t infoCode;
 
     em = (CO_EM_t*)object;
 
     if(em!=NULL && em->pFunctSignalRx!=NULL){
-        CO_memcpySwap2(&errorCode, &msg->data[0]);
-        CO_memcpySwap4(&infoCode, &msg->data[4]);
-        em->pFunctSignalRx(CO_CANrxMsg_readIdent(msg),
-                           errorCode,
-                           msg->data[2],
-                           msg->data[3],
-                           infoCode);
+        uint16_t ident = CO_CANrxMsg_readIdent(msg);
+        if (ident != 0x80) {
+            /* ignore sync messages (necessary if sync object is not used) */
+            uint8_t *data = CO_CANrxMsg_readData(msg);
+            uint16_t errorCode;
+            uint32_t infoCode;
+
+            CO_memcpySwap2(&errorCode, &data[0]);
+            CO_memcpySwap4(&infoCode, &data[4]);
+            em->pFunctSignalRx(ident,
+                            errorCode,
+                            data[2],
+                            data[3],
+                            infoCode);
+        }
     }
 }
+#endif
 
 /*
  * Function for accessing _Pre-Defined Error Field_ (index 0x1003) from SDO server.
  *
- * For more information see file CO_SDO.h.
+ * For more information see file CO_SDOserver.h.
  */
 static CO_SDO_abortCode_t CO_ODF_1003(CO_ODF_arg_t *ODF_arg);
 static CO_SDO_abortCode_t CO_ODF_1003(CO_ODF_arg_t *ODF_arg){
@@ -105,7 +114,7 @@ static CO_SDO_abortCode_t CO_ODF_1003(CO_ODF_arg_t *ODF_arg){
 /*
  * Function for accessing _COB ID EMCY_ (index 0x1014) from SDO server.
  *
- * For more information see file CO_SDO.h.
+ * For more information see file CO_SDOserver.h.
  */
 static CO_SDO_abortCode_t CO_ODF_1014(CO_ODF_arg_t *ODF_arg);
 static CO_SDO_abortCode_t CO_ODF_1014(CO_ODF_arg_t *ODF_arg){
@@ -142,10 +151,15 @@ CO_ReturnError_t CO_EM_init(
         uint16_t                CANidTxEM)
 {
     uint8_t i;
+    CO_ReturnError_t ret = CO_ERROR_NO;
 
     /* verify arguments */
     if(em==NULL || emPr==NULL || SDO==NULL || errorStatusBits==NULL || errorStatusBitsSize<6U ||
-       errorRegister==NULL || preDefErr==NULL || CANdevTx==NULL || CANdevRx==NULL){
+       errorRegister==NULL || preDefErr==NULL || CANdevTx==NULL
+#if (CO_CONFIG_EM) & CO_CONFIG_EM_CONSUMER
+       || CANdevRx==NULL
+#endif
+    ){
         return CO_ERROR_ILLEGAL_ARGUMENT;
     }
 
@@ -157,14 +171,20 @@ CO_ReturnError_t CO_EM_init(
     em->bufReadPtr              = em->buf;
     em->bufFull                 = 0U;
     em->wrongErrorReport        = 0U;
-    em->pFunctSignal            = NULL;
+#if (CO_CONFIG_EM) & CO_CONFIG_FLAG_CALLBACK_PRE
+    em->pFunctSignalPre         = NULL;
+    em->functSignalObjectPre    = NULL;
+#endif
+#if (CO_CONFIG_EM) & CO_CONFIG_EM_CONSUMER
     em->pFunctSignalRx          = NULL;
+#endif
     emPr->em                    = em;
     emPr->errorRegister         = errorRegister;
     emPr->preDefErr             = preDefErr;
     emPr->preDefErrSize         = preDefErrSize;
     emPr->preDefErrNoOfErrors   = 0U;
     emPr->inhibitEmTimer        = 0U;
+    emPr->CANerrorStatusOld     = 0U;
 
     /* clear error status bits */
     for(i=0U; i<errorStatusBitsSize; i++){
@@ -175,8 +195,9 @@ CO_ReturnError_t CO_EM_init(
     CO_OD_configure(SDO, OD_H1003_PREDEF_ERR_FIELD, CO_ODF_1003, (void*)emPr, 0, 0U);
     CO_OD_configure(SDO, OD_H1014_COBID_EMERGENCY, CO_ODF_1014, (void*)&SDO->nodeId, 0, 0U);
 
+#if (CO_CONFIG_EM) & CO_CONFIG_EM_CONSUMER
     /* configure SDO server CAN reception */
-    CO_CANrxBufferInit(
+    ret = CO_CANrxBufferInit(
             CANdevRx,               /* CAN device */
             CANdevRxIdx,            /* rx buffer index */
             CO_CAN_ID_EMERGENCY,    /* CAN identifier */
@@ -184,10 +205,10 @@ CO_ReturnError_t CO_EM_init(
             0,                      /* rtr */
             (void*)em,              /* object passed to receive function */
             CO_EM_receive);         /* this function will process received message */
+#endif
 
     /* configure emergency message CAN transmission */
     emPr->CANdev = CANdevTx;
-    emPr->CANdev->em = (void*)em; /* update pointer inside CAN device. */
     emPr->CANtxBuff = CO_CANtxBufferInit(
             CANdevTx,            /* CAN device */
             CANdevTxIdx,        /* index of specific buffer inside CAN module */
@@ -196,21 +217,30 @@ CO_ReturnError_t CO_EM_init(
             8U,                 /* number of data bytes */
             0);                 /* synchronous message flag bit */
 
-    return CO_ERROR_NO;
+    if (emPr->CANtxBuff == NULL) {
+        ret = CO_ERROR_ILLEGAL_ARGUMENT;
+    }
+
+    return ret;
 }
 
 
+#if (CO_CONFIG_EM) & CO_CONFIG_FLAG_CALLBACK_PRE
 /******************************************************************************/
-void CO_EM_initCallback(
+void CO_EM_initCallbackPre(
         CO_EM_t                *em,
-        void                  (*pFunctSignal)(void))
+        void                   *object,
+        void                  (*pFunctSignal)(void *object))
 {
     if(em != NULL){
-        em->pFunctSignal = pFunctSignal;
+        em->functSignalObjectPre = object;
+        em->pFunctSignalPre = pFunctSignal;
     }
 }
+#endif
 
 
+#if (CO_CONFIG_EM) & CO_CONFIG_EM_CONSUMER
 /******************************************************************************/
 void CO_EM_initCallbackRx(
         CO_EM_t                *em,
@@ -224,24 +254,87 @@ void CO_EM_initCallbackRx(
         em->pFunctSignalRx = pFunctSignalRx;
     }
 }
+#endif
 
 
 /******************************************************************************/
 void CO_EM_process(
         CO_EMpr_t              *emPr,
         bool_t                  NMTisPreOrOperational,
-        uint16_t                timeDifference_100us,
-        uint16_t                emInhTime,
-        uint16_t               *timerNext_ms)
+        uint32_t                timeDifference_us,
+        uint16_t                emInhTime_100us,
+        uint32_t               *timerNext_us)
 {
 
     CO_EM_t *em = emPr->em;
     uint8_t errorRegister;
     uint8_t errorMask;
     uint8_t i;
+    uint32_t emInhTime_us = (uint32_t)emInhTime_100us * 100;
+    uint16_t CANerrSt = emPr->CANdev->CANerrorStatus;
 
-    /* verify errors from driver and other */
-    CO_CANverifyErrors(emPr->CANdev);
+    /* verify errors from driver */
+    if (CANerrSt != emPr->CANerrorStatusOld) {
+        uint16_t CANerrStChanged = CANerrSt ^ emPr->CANerrorStatusOld;
+        emPr->CANerrorStatusOld = CANerrSt;
+
+        if (CANerrStChanged & (CO_CAN_ERRTX_WARNING | CO_CAN_ERRRX_WARNING)) {
+            if (CANerrSt & (CO_CAN_ERRTX_WARNING | CO_CAN_ERRRX_WARNING))
+                CO_errorReport(em, CO_EM_CAN_BUS_WARNING, CO_EMC_NO_ERROR, 0);
+            else
+                CO_errorReset(em, CO_EM_CAN_BUS_WARNING, 0);
+        }
+
+        if (CANerrStChanged & CO_CAN_ERRTX_PASSIVE) {
+            if (CANerrSt & CO_CAN_ERRTX_PASSIVE)
+                CO_errorReport(em, CO_EM_CAN_TX_BUS_PASSIVE,
+                               CO_EMC_CAN_PASSIVE, 0);
+            else
+                CO_errorReset(em, CO_EM_CAN_TX_BUS_PASSIVE, 0);
+        }
+
+        if (CANerrStChanged & CO_CAN_ERRTX_BUS_OFF) {
+            if (CANerrSt & CO_CAN_ERRTX_BUS_OFF)
+                CO_errorReport(em, CO_EM_CAN_TX_BUS_OFF,
+                               CO_EMC_BUS_OFF_RECOVERED, 0);
+            else
+                CO_errorReset(em, CO_EM_CAN_TX_BUS_OFF, 0);
+        }
+
+        if (CANerrStChanged & CO_CAN_ERRTX_OVERFLOW) {
+            if (CANerrSt & CO_CAN_ERRTX_OVERFLOW)
+                CO_errorReport(em, CO_EM_CAN_TX_OVERFLOW,
+                               CO_EMC_CAN_OVERRUN, 0);
+            else
+                CO_errorReset(em, CO_EM_CAN_TX_OVERFLOW, 0);
+        }
+
+        if (CANerrStChanged & CO_CAN_ERRTX_PDO_LATE) {
+            if (CANerrSt & CO_CAN_ERRTX_PDO_LATE)
+                CO_errorReport(em, CO_EM_TPDO_OUTSIDE_WINDOW,
+                               CO_EMC_COMMUNICATION, 0);
+            else
+                CO_errorReset(em, CO_EM_TPDO_OUTSIDE_WINDOW, 0);
+        }
+
+        if (CANerrStChanged & CO_CAN_ERRRX_PASSIVE) {
+            if (CANerrSt & CO_CAN_ERRRX_PASSIVE)
+                CO_errorReport(em, CO_EM_CAN_RX_BUS_PASSIVE,
+                               CO_EMC_CAN_PASSIVE, 0);
+            else
+                CO_errorReset(em, CO_EM_CAN_RX_BUS_PASSIVE, 0);
+        }
+
+        if (CANerrStChanged & CO_CAN_ERRRX_OVERFLOW) {
+            if (CANerrSt & CO_CAN_ERRRX_OVERFLOW)
+                CO_errorReport(em, CO_EM_CAN_RXB_OVERFLOW,
+                               CO_EMC_CAN_OVERRUN, 0);
+            else
+                CO_errorReset(em, CO_EM_CAN_RXB_OVERFLOW, 0);
+        }
+    }
+
+    /* verify other errors */
     if(em->wrongErrorReport != 0U){
         CO_errorReport(em, CO_EM_WRONG_ERROR_REPORT, CO_EMC_SOFTWARE_INTERNAL, (uint32_t)em->wrongErrorReport);
         em->wrongErrorReport = 0U;
@@ -268,8 +361,8 @@ void CO_EM_process(
     *emPr->errorRegister = (*emPr->errorRegister & errorMask) | errorRegister;
 
     /* inhibit time */
-    if(emPr->inhibitEmTimer < emInhTime){
-        emPr->inhibitEmTimer += timeDifference_100us;
+    if (emPr->inhibitEmTimer < emInhTime_us) {
+        emPr->inhibitEmTimer += timeDifference_us;
     }
 
     /* send Emergency message. */
@@ -278,17 +371,31 @@ void CO_EM_process(
             (em->bufReadPtr != em->bufWritePtr || em->bufFull))
     {
         uint32_t preDEF;    /* preDefinedErrorField */
-        uint16_t diff;
 
-        if (emPr->inhibitEmTimer >= emInhTime) {
+        if (emPr->inhibitEmTimer >= emInhTime_us) {
             /* inhibit time elapsed, send message */
 
             /* add error register */
             em->bufReadPtr[2] = *emPr->errorRegister;
 
+#if (CO_CONFIG_EM) & CO_CONFIG_EM_CONSUMER
+            /* report also own emergency messages */
+            if (em->pFunctSignalRx != NULL) {
+                uint16_t errorCode;
+                uint32_t infoCode;
+                CO_memcpySwap2(&errorCode, &em->bufReadPtr[0]);
+                CO_memcpySwap4(&infoCode, &em->bufReadPtr[4]);
+                em->pFunctSignalRx(0,
+                                   errorCode,
+                                   em->bufReadPtr[2],
+                                   em->bufReadPtr[3],
+                                   infoCode);
+            }
+#endif
+
             /* copy data to CAN emergency message */
-            CO_memcpy(emPr->CANtxBuff->data, em->bufReadPtr, 8U);
-            CO_memcpy((uint8_t*)&preDEF, em->bufReadPtr, 4U);
+            memcpy(emPr->CANtxBuff->data, em->bufReadPtr, sizeof(emPr->CANtxBuff->data));
+            memcpy(&preDEF, em->bufReadPtr, sizeof(preDEF));
             em->bufReadPtr += 8;
 
             /* Update read buffer pointer and reset inhibit timer */
@@ -320,13 +427,18 @@ void CO_EM_process(
 
             /* send CAN message */
             CO_CANsend(emPr->CANdev, emPr->CANtxBuff);
-        }
 
-        /* check again after inhibit time elapsed */
-        diff = (emInhTime + 9) / 10; /* time difference in ms, always round up */
-        if (timerNext_ms != NULL && *timerNext_ms > diff) {
-            *timerNext_ms = diff;
         }
+#if (CO_CONFIG_EM) & CO_CONFIG_FLAG_TIMERNEXT
+        else if (timerNext_us != NULL) {
+            uint32_t diff;
+            /* check again after inhibit time elapsed */
+            diff = emInhTime_us - emPr->inhibitEmTimer;
+            if (*timerNext_us > diff) {
+                *timerNext_us = diff;
+            }
+        }
+#endif
     }
 
     return;
@@ -378,17 +490,19 @@ void CO_errorReport(CO_EM_t *em, const uint8_t errorBit, const uint16_t errorCod
 
             /* copy data to the buffer, increment writePtr and verify buffer full */
             CO_LOCK_EMCY();
-            CO_memcpy(em->bufWritePtr, &bufCopy[0], 8);
+            memcpy(em->bufWritePtr, bufCopy, sizeof(bufCopy));
             em->bufWritePtr += 8;
 
             if(em->bufWritePtr == em->bufEnd) em->bufWritePtr = em->buf;
             if(em->bufWritePtr == em->bufReadPtr) em->bufFull = 1;
             CO_UNLOCK_EMCY();
 
+#if (CO_CONFIG_EM) & CO_CONFIG_FLAG_CALLBACK_PRE
             /* Optional signal to RTOS, which can resume task, which handles CO_EM_process */
-            if(em->pFunctSignal != NULL) {
-                em->pFunctSignal();
+            if(em->pFunctSignalPre != NULL) {
+                em->pFunctSignalPre(em->functSignalObjectPre);
             }
+#endif
         }
     }
 }
@@ -437,17 +551,19 @@ void CO_errorReset(CO_EM_t *em, const uint8_t errorBit, const uint32_t infoCode)
 
             /* copy data to the buffer, increment writePtr and verify buffer full */
             CO_LOCK_EMCY();
-            CO_memcpy(em->bufWritePtr, &bufCopy[0], 8);
+            memcpy(em->bufWritePtr, bufCopy, sizeof(bufCopy));
             em->bufWritePtr += 8;
 
             if(em->bufWritePtr == em->bufEnd) em->bufWritePtr = em->buf;
             if(em->bufWritePtr == em->bufReadPtr) em->bufFull = 1;
             CO_UNLOCK_EMCY();
 
+#if (CO_CONFIG_EM) & CO_CONFIG_FLAG_CALLBACK_PRE
             /* Optional signal to RTOS, which can resume task, which handles CO_EM_process */
-            if(em->pFunctSignal != NULL) {
-                em->pFunctSignal();
+            if(em->pFunctSignalPre != NULL) {
+                em->pFunctSignalPre(em->functSignalObjectPre);
             }
+#endif
         }
     }
 }

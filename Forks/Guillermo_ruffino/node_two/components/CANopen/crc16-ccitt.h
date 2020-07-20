@@ -34,7 +34,7 @@ extern "C" {
 
 /**
  * @defgroup CO_crc16_ccitt CRC 16 CCITT
- * @ingroup CO_CANopen
+ * @ingroup CO_CANopen_301
  * @{
  *
  * Calculation of CRC 16 CCITT polynomial.

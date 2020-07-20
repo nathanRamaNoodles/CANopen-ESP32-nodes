@@ -1,15 +1,15 @@
 # CANopen-ESP32-nodes
 Playing around with CANopenNode to fully expand the true potential of CAN bus on ESP32 while obeying ESP-idf rules.
-Link to this repo on [Github](https://github.com/nathanRamaNoodles/CANopen-ESP32-nodes) 
+Link to this repo on [Github](https://github.com/nathanRamaNoodles/CANopen-ESP32-nodes)
 <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
 
 - [CANopen-ESP32-nodes](#canopen-esp32-nodes)
 				- [Why use CAN?](#why-use-can)
 				- [Why use CANopen?](#why-use-canopen)
-	- [Forks](#forks)
-	- [Requirements](#requirements)
-	- [How to use](#how-to-use)
-	- [License](#license)
+- [Forks](#forks)
+- [Requirements](#requirements)
+- [How to use](#how-to-use)
+- [License](#license)
 
 <!-- /TOC -->
 
@@ -25,9 +25,10 @@ Link to this repo on [Github](https://github.com/nathanRamaNoodles/CANopen-ESP32
 The Forks folder consists of projects I've seen over the internet, and I've tried to re-write in ESP-idf platform:
  + [Alexander Miller's implementation](https://github.com/xXAM22Xx/CANopenESP32) uses the Apache License 2.0
    + Only implements the Master Node.  Alexander has other CANopen devices to play with like the [Dunker motor](https://www.dunkermotoren.com/en/)
-   + It works, but I don't know how PDO mapping nor the object dictionary works.
+   + Both nodes communicate, but I don't know how PDO mapping and the object dictionary works.
  + [Guillermo-ruffino's implementation](https://github.com/CANopenNode/CANopenNode/issues/198#issuecomment-658429391):
-   + Consists of a LSS Slave node.
+   + Consists of an LSS Slave node.
+   + Node two implements Guillermo's code, but node one is a raspberry pi, so I don't have enough info. Thus, node one uses Alexander's node one.
 
 ## Requirements
 You will need the following materials:
@@ -39,6 +40,10 @@ You will need the following materials:
 
 1. Download [esp-idf](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/index.html), and follow their instructions.
 2. Enter into a root directory for one of the nodes for this repo, like `cd ./Forks/Alexander_Miller/node_one/`
+3. You should edit your `GPIO` configurations in the `CO-config.h` (located in the `components/CANopen` for each esp-idf project) for your CAN transceiver.
+   + For my case, all my `node_one's` are: (GPIO_TX, GPIO_RX) = (12, 32)
+And all my `node_two's` are: (GPIO_TX, GPIO_RX) = (16, 17).
+   + Make sure you connect your CAN transceiver to your chosen GPIO pins (it doesn't matter which GPIO you choose).
 3. Enter into terminal
    1. `idf.py menuconfig`
 	    + You will see a GUI, but we can skip this.

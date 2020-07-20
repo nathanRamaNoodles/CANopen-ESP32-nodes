@@ -25,7 +25,7 @@
 
 
 #include "CO_driver.h"
-#include "CO_SDO.h"
+#include "CO_SDOserver.h"
 #include "CO_Emergency.h"
 #include "CO_NMT_Heartbeat.h"
 #include "CO_SYNC.h"
@@ -37,33 +37,43 @@
  * message with correct identifier will be received. For more information and
  * description of parameters see file CO_driver.h.
  */
-static void CO_SYNC_receive(void *object, const CO_CANrxMsg_t *msg){
+static void CO_SYNC_receive(void *object, void *msg) {
     CO_SYNC_t *SYNC;
-    uint8_t operState;
+    CO_NMT_internalState_t operState;
 
     SYNC = (CO_SYNC_t*)object;   /* this is the correct pointer type of the first argument */
     operState = *SYNC->operatingState;
 
     if((operState == CO_NMT_OPERATIONAL) || (operState == CO_NMT_PRE_OPERATIONAL)){
+        uint8_t DLC = CO_CANrxMsg_readDLC(msg);
+
         if(SYNC->counterOverflowValue == 0){
-            if(msg->DLC == 0U){
-                SET_CANrxNew(SYNC->CANrxNew);
+            if(DLC == 0U){
+                CO_FLAG_SET(SYNC->CANrxNew);
             }
             else{
-                SYNC->receiveError = (uint16_t)msg->DLC | 0x0100U;
+                SYNC->receiveError = (uint16_t)DLC | 0x0100U;
             }
         }
         else{
-            if(msg->DLC == 1U){
-                SYNC->counter = msg->data[0];
-                SET_CANrxNew(SYNC->CANrxNew);
+            if(DLC == 1U){
+                uint8_t *data = CO_CANrxMsg_readData(msg);
+                SYNC->counter = data[0];
+                CO_FLAG_SET(SYNC->CANrxNew);
             }
             else{
-                SYNC->receiveError = (uint16_t)msg->DLC | 0x0200U;
+                SYNC->receiveError = (uint16_t)DLC | 0x0200U;
             }
         }
-        if(IS_CANrxNew(SYNC->CANrxNew)) {
+        if(CO_FLAG_READ(SYNC->CANrxNew)) {
             SYNC->CANrxToggle = SYNC->CANrxToggle ? false : true;
+
+#if (CO_CONFIG_SYNC) & CO_CONFIG_FLAG_CALLBACK_PRE
+            /* Optional signal to RTOS, which can resume task, which handles SYNC. */
+            if(SYNC->pFunctSignalPre != NULL) {
+                SYNC->pFunctSignalPre(SYNC->functSignalObjectPre);
+            }
+#endif
         }
     }
 }
@@ -72,7 +82,7 @@ static void CO_SYNC_receive(void *object, const CO_CANrxMsg_t *msg){
 /*
  * Function for accessing _COB ID SYNC Message_ (index 0x1005) from SDO server.
  *
- * For more information see file CO_SDO.h.
+ * For more information see file CO_SDOserver.h.
  */
 static CO_SDO_abortCode_t CO_ODF_1005(CO_ODF_arg_t *ODF_arg){
     CO_SYNC_t *SYNC;
@@ -102,7 +112,7 @@ static CO_SDO_abortCode_t CO_ODF_1005(CO_ODF_arg_t *ODF_arg){
             }
         }
 
-        /* configure sync producer and consumer */
+        /* configure sync producer */
         if(ret == CO_SDO_AB_NONE){
             SYNC->COB_ID = (uint16_t)(value & 0x7FFU);
 
@@ -120,20 +130,33 @@ static CO_SDO_abortCode_t CO_ODF_1005(CO_ODF_arg_t *ODF_arg){
                         0,                      /* rtr */
                         len,                    /* number of data bytes */
                         0);                     /* synchronous message flag bit */
-                SYNC->isProducer = true;
+
+                if (SYNC->CANtxBuff == NULL) {
+                    ret = CO_SDO_AB_DATA_DEV_STATE;
+                    SYNC->isProducer = false;
+                } else {
+                    SYNC->isProducer = true;
+                }
             }
             else{
                 SYNC->isProducer = false;
             }
+        }
 
-            CO_CANrxBufferInit(
-                    SYNC->CANdevRx,         /* CAN device */
-                    SYNC->CANdevRxIdx,      /* rx buffer index */
-                    SYNC->COB_ID,           /* CAN identifier */
-                    0x7FF,                  /* mask */
-                    0,                      /* rtr */
-                    (void*)SYNC,            /* object passed to receive function */
-                    CO_SYNC_receive);       /* this function will process received message */
+        /* configure sync consumer */
+        if (ret == CO_SDO_AB_NONE) {
+            CO_ReturnError_t CANret = CO_CANrxBufferInit(
+                SYNC->CANdevRx,         /* CAN device */
+                SYNC->CANdevRxIdx,      /* rx buffer index */
+                SYNC->COB_ID,           /* CAN identifier */
+                0x7FF,                  /* mask */
+                0,                      /* rtr */
+                (void*)SYNC,            /* object passed to receive function */
+                CO_SYNC_receive);       /* this function will process received message */
+
+            if (CANret != CO_ERROR_NO) {
+                ret = CO_SDO_AB_DATA_DEV_STATE;
+            }
         }
     }
 
@@ -144,7 +167,7 @@ static CO_SDO_abortCode_t CO_ODF_1005(CO_ODF_arg_t *ODF_arg){
 /*
  * Function for accessing _Communication cycle period_ (index 0x1006) from SDO server.
  *
- * For more information see file CO_SDO.h.
+ * For more information see file CO_SDOserver.h.
  */
 static CO_SDO_abortCode_t CO_ODF_1006(CO_ODF_arg_t *ODF_arg){
     CO_SYNC_t *SYNC;
@@ -177,7 +200,7 @@ static CO_SDO_abortCode_t CO_ODF_1006(CO_ODF_arg_t *ODF_arg){
 /**
  * Function for accessing _Synchronous counter overflow value_ (index 0x1019) from SDO server.
  *
- * For more information see file CO_SDO.h.
+ * For more information see file CO_SDOserver.h.
  */
 static CO_SDO_abortCode_t CO_ODF_1019(CO_ODF_arg_t *ODF_arg){
     CO_SYNC_t *SYNC;
@@ -209,6 +232,10 @@ static CO_SDO_abortCode_t CO_ODF_1019(CO_ODF_arg_t *ODF_arg){
                     0,                      /* rtr */
                     len,                    /* number of data bytes */
                     0);                     /* synchronous message flag bit */
+
+            if (SYNC->CANtxBuff == NULL) {
+                ret = CO_SDO_AB_DATA_DEV_STATE;
+            }
         }
     }
 
@@ -221,7 +248,7 @@ CO_ReturnError_t CO_SYNC_init(
         CO_SYNC_t              *SYNC,
         CO_EM_t                *em,
         CO_SDO_t               *SDO,
-        uint8_t                *operatingState,
+        CO_NMT_internalState_t *operatingState,
         uint32_t                COB_ID_SYNCMessage,
         uint32_t                communicationCyclePeriod,
         uint8_t                 synchronousCounterOverflowValue,
@@ -231,6 +258,7 @@ CO_ReturnError_t CO_SYNC_init(
         uint16_t                CANdevTxIdx)
 {
     uint8_t len = 0;
+    CO_ReturnError_t ret = CO_ERROR_NO;
 
     /* verify arguments */
     if(SYNC==NULL || em==NULL || SDO==NULL || operatingState==NULL ||
@@ -252,7 +280,7 @@ CO_ReturnError_t CO_SYNC_init(
 
     SYNC->curentSyncTimeIsInsideWindow = true;
 
-    CLEAR_CANrxNew(SYNC->CANrxNew);
+    CO_FLAG_CLEAR(SYNC->CANrxNew);
     SYNC->CANrxToggle = false;
     SYNC->timer = 0;
     SYNC->counter = 0;
@@ -264,13 +292,18 @@ CO_ReturnError_t CO_SYNC_init(
     SYNC->CANdevRx = CANdevRx;
     SYNC->CANdevRxIdx = CANdevRxIdx;
 
+#if (CO_CONFIG_SYNC) & CO_CONFIG_FLAG_CALLBACK_PRE
+    SYNC->pFunctSignalPre = NULL;
+    SYNC->functSignalObjectPre = NULL;
+#endif
+
     /* Configure Object dictionary entry at index 0x1005, 0x1006 and 0x1019 */
     CO_OD_configure(SDO, OD_H1005_COBID_SYNC,        CO_ODF_1005, (void*)SYNC, 0, 0);
     CO_OD_configure(SDO, OD_H1006_COMM_CYCL_PERIOD,  CO_ODF_1006, (void*)SYNC, 0, 0);
     CO_OD_configure(SDO, OD_H1019_SYNC_CNT_OVERFLOW, CO_ODF_1019, (void*)SYNC, 0, 0);
 
     /* configure SYNC CAN reception */
-    CO_CANrxBufferInit(
+    ret = CO_CANrxBufferInit(
             CANdevRx,               /* CAN device */
             CANdevRxIdx,            /* rx buffer index */
             SYNC->COB_ID,           /* CAN identifier */
@@ -290,17 +323,37 @@ CO_ReturnError_t CO_SYNC_init(
             len,                    /* number of data bytes */
             0);                     /* synchronous message flag bit */
 
-    return CO_ERROR_NO;
+    if (SYNC->CANtxBuff == NULL) {
+        ret = CO_ERROR_ILLEGAL_ARGUMENT;
+    }
+
+    return ret;
 }
 
 
+#if (CO_CONFIG_SYNC) & CO_CONFIG_FLAG_CALLBACK_PRE
 /******************************************************************************/
-uint8_t CO_SYNC_process(
+void CO_SYNC_initCallbackPre(
+        CO_SYNC_t              *SYNC,
+        void                   *object,
+        void                  (*pFunctSignalPre)(void *object))
+{
+    if(SYNC != NULL){
+        SYNC->functSignalObjectPre = object;
+        SYNC->pFunctSignalPre = pFunctSignalPre;
+    }
+}
+#endif
+
+
+/******************************************************************************/
+CO_SYNC_status_t CO_SYNC_process(
         CO_SYNC_t              *SYNC,
         uint32_t                timeDifference_us,
-        uint32_t                ObjDict_synchronousWindowLength)
+        uint32_t                ObjDict_synchronousWindowLength,
+        uint32_t               *timerNext_us)
 {
-    uint8_t ret = 0;
+    CO_SYNC_status_t ret = CO_SYNC_NONE;
     uint32_t timerNew;
 
     if(*SYNC->operatingState == CO_NMT_OPERATIONAL || *SYNC->operatingState == CO_NMT_PRE_OPERATIONAL){
@@ -309,10 +362,10 @@ uint8_t CO_SYNC_process(
         if(timerNew > SYNC->timer) SYNC->timer = timerNew;
 
         /* was SYNC just received */
-        if(IS_CANrxNew(SYNC->CANrxNew)){
+        if(CO_FLAG_READ(SYNC->CANrxNew)){
             SYNC->timer = 0;
-            ret = 1;
-            CLEAR_CANrxNew(SYNC->CANrxNew);
+            ret = CO_SYNC_RECEIVED;
+            CO_FLAG_CLEAR(SYNC->CANrxNew);
         }
 
         /* SYNC producer */
@@ -320,18 +373,27 @@ uint8_t CO_SYNC_process(
             if(SYNC->timer >= SYNC->periodTime){
                 if(++SYNC->counter > SYNC->counterOverflowValue) SYNC->counter = 1;
                 SYNC->timer = 0;
-                ret = 1;
+                ret = CO_SYNC_RECEIVED;
                 SYNC->CANrxToggle = SYNC->CANrxToggle ? false : true;
                 SYNC->CANtxBuff->data[0] = SYNC->counter;
                 CO_CANsend(SYNC->CANdevTx, SYNC->CANtxBuff);
             }
+#if (CO_CONFIG_SYNC) & CO_CONFIG_FLAG_TIMERNEXT
+            /* Calculate when next SYNC needs to be sent */
+            if(timerNext_us != NULL){
+                uint32_t diff = SYNC->periodTime - SYNC->timer;
+                if(*timerNext_us > diff){
+                    *timerNext_us = diff;
+                }
+            }
+#endif
         }
 
         /* Synchronous PDOs are allowed only inside time window */
         if(ObjDict_synchronousWindowLength){
             if(SYNC->timer > ObjDict_synchronousWindowLength){
                 if(SYNC->curentSyncTimeIsInsideWindow){
-                    ret = 2;
+                    ret = CO_SYNC_OUTSIDE_WINDOW;
                 }
                 SYNC->curentSyncTimeIsInsideWindow = false;
             }
@@ -344,11 +406,22 @@ uint8_t CO_SYNC_process(
         }
 
         /* Verify timeout of SYNC */
-        if(SYNC->periodTime && SYNC->timer > SYNC->periodTimeoutTime && *SYNC->operatingState == CO_NMT_OPERATIONAL)
-            CO_errorReport(SYNC->em, CO_EM_SYNC_TIME_OUT, CO_EMC_COMMUNICATION, SYNC->timer);
+        if(SYNC->periodTime && *SYNC->operatingState == CO_NMT_OPERATIONAL) {
+            if(SYNC->timer > SYNC->periodTimeoutTime) {
+                CO_errorReport(SYNC->em, CO_EM_SYNC_TIME_OUT, CO_EMC_COMMUNICATION, SYNC->timer);
+            }
+#if (CO_CONFIG_SYNC) & CO_CONFIG_FLAG_TIMERNEXT
+            else if(timerNext_us != NULL) {
+                uint32_t diff = SYNC->periodTimeoutTime - SYNC->timer;
+                if(*timerNext_us > diff){
+                    *timerNext_us = diff;
+                }
+            }
+#endif
+        }
     }
     else {
-        CLEAR_CANrxNew(SYNC->CANrxNew);
+        CO_FLAG_CLEAR(SYNC->CANrxNew);
     }
 
     /* verify error from receive function */

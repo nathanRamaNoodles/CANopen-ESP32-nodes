@@ -1,5 +1,5 @@
 /**
- * CANopen SYNC object protocol.
+ * CANopen Synchronisation protocol.
  *
  * @file        CO_SYNC.h
  * @ingroup     CO_SYNC
@@ -33,10 +33,10 @@ extern "C" {
 
 /**
  * @defgroup CO_SYNC SYNC
- * @ingroup CO_CANopen
+ * @ingroup CO_CANopen_301
  * @{
  *
- * CANopen SYNC object protocol.
+ * CANopen Synchronisation protocol.
  *
  * For CAN identifier see #CO_Default_CAN_ID_t
  *
@@ -66,7 +66,7 @@ extern "C" {
  */
 typedef struct{
     CO_EM_t            *em;             /**< From CO_SYNC_init() */
-    uint8_t            *operatingState; /**< From CO_SYNC_init() */
+    CO_NMT_internalState_t *operatingState; /**< From CO_SYNC_init() */
     /** True, if device is SYNC producer. Calculated from _COB ID SYNC Message_
     variable from Object dictionary (index 0x1005). */
     bool_t              isProducer;
@@ -96,12 +96,26 @@ typedef struct{
     uint32_t            timer;
     /** Set to nonzero value, if SYNC with wrong data length is received from CAN */
     uint16_t            receiveError;
+#if ((CO_CONFIG_SYNC) & CO_CONFIG_FLAG_CALLBACK_PRE) || defined CO_DOXYGEN
+    /** From CO_SYNC_initCallbackPre() or NULL */
+    void              (*pFunctSignalPre)(void *object);
+    /** From CO_SYNC_initCallbackPre() or NULL */
+    void               *functSignalObjectPre;
+#endif
     CO_CANmodule_t     *CANdevRx;       /**< From CO_SYNC_init() */
     uint16_t            CANdevRxIdx;    /**< From CO_SYNC_init() */
     CO_CANmodule_t     *CANdevTx;       /**< From CO_SYNC_init() */
     CO_CANtx_t         *CANtxBuff;      /**< CAN transmit buffer inside CANdevTx */
     uint16_t            CANdevTxIdx;    /**< From CO_SYNC_init() */
 }CO_SYNC_t;
+
+
+/** Return value for #CO_SYNC_process */
+typedef enum {
+    CO_SYNC_NONE            = 0, /**< SYNC not received */
+    CO_SYNC_RECEIVED        = 1, /**< SYNC received */
+    CO_SYNC_OUTSIDE_WINDOW  = 2  /**< SYNC received outside SYNC window */
+} CO_SYNC_status_t;
 
 
 /**
@@ -127,7 +141,7 @@ CO_ReturnError_t CO_SYNC_init(
         CO_SYNC_t              *SYNC,
         CO_EM_t                *em,
         CO_SDO_t               *SDO,
-        uint8_t                *operatingState,
+        CO_NMT_internalState_t *operatingState,
         uint32_t                COB_ID_SYNCMessage,
         uint32_t                communicationCyclePeriod,
         uint8_t                 synchronousCounterOverflowValue,
@@ -135,6 +149,25 @@ CO_ReturnError_t CO_SYNC_init(
         uint16_t                CANdevRxIdx,
         CO_CANmodule_t         *CANdevTx,
         uint16_t                CANdevTxIdx);
+
+
+#if ((CO_CONFIG_SYNC) & CO_CONFIG_FLAG_CALLBACK_PRE) || defined CO_DOXYGEN
+/**
+ * Initialize SYNC callback function.
+ *
+ * Function initializes optional callback function, which should immediately
+ * start processing of CO_SYNC_process() function.
+ * Callback is called after SYNC message is received from the CAN bus.
+ *
+ * @param SYNC This object.
+ * @param object Pointer to object, which will be passed to pFunctSignalPre(). Can be NULL
+ * @param pFunctSignalPre Pointer to the callback function. Not called if NULL.
+ */
+void CO_SYNC_initCallbackPre(
+        CO_SYNC_t              *SYNC,
+        void                   *object,
+        void                  (*pFunctSignalPre)(void *object));
+#endif
 
 
 /**
@@ -146,15 +179,15 @@ CO_ReturnError_t CO_SYNC_init(
  * @param timeDifference_us Time difference from previous function call in [microseconds].
  * @param ObjDict_synchronousWindowLength _Synchronous window length_ variable from
  * Object dictionary (index 0x1007).
+ * @param [out] timerNext_us info to OS - see CO_process_SYNC_PDO().
  *
- * @return 0: No special meaning.
- * @return 1: New SYNC message recently received or was just transmitted.
- * @return 2: SYNC time was just passed out of window.
+ * @return #CO_SYNC_status_t: CO_SYNC_NONE, CO_SYNC_RECEIVED or CO_SYNC_OUTSIDE_WINDOW.
  */
-uint8_t CO_SYNC_process(
+CO_SYNC_status_t CO_SYNC_process(
         CO_SYNC_t              *SYNC,
         uint32_t                timeDifference_us,
-        uint32_t                ObjDict_synchronousWindowLength);
+        uint32_t                ObjDict_synchronousWindowLength,
+        uint32_t               *timerNext_us);
 
 #ifdef __cplusplus
 }

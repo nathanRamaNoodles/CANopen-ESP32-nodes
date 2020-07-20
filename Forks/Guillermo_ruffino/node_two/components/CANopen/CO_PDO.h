@@ -23,6 +23,14 @@
  * limitations under the License.
  */
 
+#include "CO_driver.h"
+#include "CO_SDOserver.h"
+#include "CO_Emergency.h"
+#include "CO_NMT_Heartbeat.h"
+#if (CO_CONFIG_PDO) & CO_CONFIG_PDO_SYNC_ENABLE
+#include "CO_SYNC.h"
+#endif
+
 
 #ifndef CO_PDO_H
 #define CO_PDO_H
@@ -33,7 +41,7 @@ extern "C" {
 
 /**
  * @defgroup CO_PDO PDO
- * @ingroup CO_CANopen
+ * @ingroup CO_CANopen_301
  * @{
  *
  * CANopen Process Data Object protocol.
@@ -165,25 +173,36 @@ typedef struct{
 typedef struct{
     CO_EM_t            *em;             /**< From CO_RPDO_init() */
     CO_SDO_t           *SDO;            /**< From CO_RPDO_init() */
-    CO_SYNC_t          *SYNC;           /**< From CO_RPDO_init() */
     const CO_RPDOCommPar_t *RPDOCommPar;/**< From CO_RPDO_init() */
     const CO_RPDOMapPar_t  *RPDOMapPar; /**< From CO_RPDO_init() */
-    uint8_t            *operatingState; /**< From CO_RPDO_init() */
+    CO_NMT_internalState_t *operatingState; /**< From CO_RPDO_init() */
     uint8_t             nodeId;         /**< From CO_RPDO_init() */
     uint16_t            defaultCOB_ID;  /**< From CO_RPDO_init() */
     uint8_t             restrictionFlags;/**< From CO_RPDO_init() */
     /** True, if PDO is enabled and valid */
     bool_t              valid;
-    /** True, if PDO synchronous (transmissionType <= 240) */
-    bool_t              synchronous;
     /** Data length of the received PDO message. Calculated from mapping */
     uint8_t             dataLength;
     /** Pointers to 8 data objects, where PDO will be copied */
     uint8_t            *mapPointer[8];
+#if ((CO_CONFIG_PDO) & CO_CONFIG_PDO_SYNC_ENABLE) || defined CO_DOXYGEN
+    CO_SYNC_t          *SYNC;           /**< From CO_RPDO_init() */
+    /** True, if PDO synchronous (transmissionType <= 240) */
+    bool_t              synchronous;
     /** Variable indicates, if new PDO message received from CAN bus. */
     volatile void      *CANrxNew[2];
     /** 8 data bytes of the received message. */
     uint8_t             CANrxData[2][8];
+#else
+    volatile void      *CANrxNew[1];
+    uint8_t             CANrxData[1][8];
+#endif
+#if ((CO_CONFIG_PDO) & CO_CONFIG_FLAG_CALLBACK_PRE) || defined CO_DOXYGEN
+    /** From CO_RPDO_initCallbackPre() or NULL */
+    void              (*pFunctSignalPre)(void *object);
+    /** From CO_RPDO_initCallbackPre() or NULL */
+    void               *functSignalObjectPre;
+#endif
     CO_CANmodule_t     *CANdevRx;       /**< From CO_RPDO_init() */
     uint16_t            CANdevRxIdx;    /**< From CO_RPDO_init() */
 }CO_RPDO_t;
@@ -195,10 +214,9 @@ typedef struct{
 typedef struct{
     CO_EM_t            *em;             /**< From CO_TPDO_init() */
     CO_SDO_t           *SDO;            /**< From CO_TPDO_init() */
-    CO_SYNC_t          *SYNC;           /**< From CO_TPDO_init() */
     const CO_TPDOCommPar_t *TPDOCommPar;/**< From CO_TPDO_init() */
     const CO_TPDOMapPar_t  *TPDOMapPar; /**< From CO_TPDO_init() */
-    uint8_t            *operatingState; /**< From CO_TPDO_init() */
+    CO_NMT_internalState_t *operatingState; /**< From CO_TPDO_init() */
     uint8_t             nodeId;         /**< From CO_TPDO_init() */
     uint16_t            defaultCOB_ID;  /**< From CO_TPDO_init() */
     uint8_t             restrictionFlags;/**< From CO_TPDO_init() */
@@ -210,16 +228,19 @@ typedef struct{
     uint8_t             sendRequest;
     /** Pointers to 8 data objects, where PDO will be copied */
     uint8_t            *mapPointer[8];
-    /** Each flag bit is connected with one mapPointer. If flag bit
-    is true, CO_TPDO_process() functiuon will send PDO if
-    Change of State is detected on value pointed by that mapPointer */
-    uint8_t             sendIfCOSFlags;
-    /** SYNC counter used for PDO sending */
-    uint8_t             syncCounter;
     /** Inhibit timer used for inhibit PDO sending translated to microseconds */
     uint32_t            inhibitTimer;
     /** Event timer used for PDO sending translated to microseconds */
     uint32_t            eventTimer;
+    /** Each flag bit is connected with one mapPointer. If flag bit
+    is true, CO_TPDO_process() functiuon will send PDO if
+    Change of State is detected on value pointed by that mapPointer */
+    uint8_t             sendIfCOSFlags;
+#if ((CO_CONFIG_PDO) & CO_CONFIG_PDO_SYNC_ENABLE) || defined CO_DOXYGEN
+    /** SYNC counter used for PDO sending */
+    uint8_t             syncCounter;
+    CO_SYNC_t          *SYNC;           /**< From CO_TPDO_init() */
+#endif
     CO_CANmodule_t     *CANdevTx;       /**< From CO_TPDO_init() */
     CO_CANtx_t         *CANtxBuff;      /**< CAN transmit buffer inside CANdev */
     uint16_t            CANdevTxIdx;    /**< From CO_TPDO_init() */
@@ -234,6 +255,7 @@ typedef struct{
  * @param RPDO This object will be initialized.
  * @param em Emergency object.
  * @param SDO SDO server object.
+ * @param SYNC void pointer to SYNC object or NULL.
  * @param operatingState Pointer to variable indicating CANopen device NMT internal state.
  * @param nodeId CANopen Node ID of this device. If default COB_ID is used, value will be added.
  * @param defaultCOB_ID Default COB ID for this PDO (without NodeId).
@@ -259,8 +281,10 @@ CO_ReturnError_t CO_RPDO_init(
         CO_RPDO_t              *RPDO,
         CO_EM_t                *em,
         CO_SDO_t               *SDO,
+#if ((CO_CONFIG_PDO) & CO_CONFIG_PDO_SYNC_ENABLE) || defined CO_DOXYGEN
         CO_SYNC_t              *SYNC,
-        uint8_t                *operatingState,
+#endif
+        CO_NMT_internalState_t *operatingState,
         uint8_t                 nodeId,
         uint16_t                defaultCOB_ID,
         uint8_t                 restrictionFlags,
@@ -272,6 +296,25 @@ CO_ReturnError_t CO_RPDO_init(
         uint16_t                CANdevRxIdx);
 
 
+#if ((CO_CONFIG_PDO) & CO_CONFIG_FLAG_CALLBACK_PRE) || defined CO_DOXYGEN
+/**
+ * Initialize RPDO callback function.
+ *
+ * Function initializes optional callback function, which should immediately
+ * start processing of CO_RPDO_process() function.
+ * Callback is called after RPDO message is received from the CAN bus.
+ *
+ * @param RPDO This object.
+ * @param object Pointer to object, which will be passed to pFunctSignalPre(). Can be NULL
+ * @param pFunctSignalPre Pointer to the callback function. Not called if NULL.
+ */
+void CO_RPDO_initCallbackPre(
+        CO_RPDO_t              *RPDO,
+        void                   *object,
+        void                  (*pFunctSignalPre)(void *object));
+#endif
+
+
 /**
  * Initialize TPDO object.
  *
@@ -280,6 +323,7 @@ CO_ReturnError_t CO_RPDO_init(
  * @param TPDO This object will be initialized.
  * @param em Emergency object.
  * @param SDO SDO object.
+ * @param SYNC void pointer to SYNC object or NULL.
  * @param operatingState Pointer to variable indicating CANopen device NMT internal state.
  * @param nodeId CANopen Node ID of this device. If default COB_ID is used, value will be added.
  * @param defaultCOB_ID Default COB ID for this PDO (without NodeId).
@@ -305,8 +349,10 @@ CO_ReturnError_t CO_TPDO_init(
         CO_TPDO_t              *TPDO,
         CO_EM_t                *em,
         CO_SDO_t               *SDO,
+#if ((CO_CONFIG_PDO) & CO_CONFIG_PDO_SYNC_ENABLE) || defined CO_DOXYGEN
         CO_SYNC_t              *SYNC,
-        uint8_t                *operatingState,
+#endif
+        CO_NMT_internalState_t *operatingState,
         uint8_t                 nodeId,
         uint16_t                defaultCOB_ID,
         uint8_t                 restrictionFlags,
@@ -370,14 +416,15 @@ void CO_RPDO_process(CO_RPDO_t *RPDO, bool_t syncWas);
  * CO_TPDOisCOS() must be called before.
  *
  * @param TPDO This object.
- * @param SYNC SYNC object. Ignored if NULL.
  * @param syncWas True, if CANopen SYNC message was just received or transmitted.
  * @param timeDifference_us Time difference from previous function call in [microseconds].
+ * @param [out] timerNext_us info to OS - see CO_process_SYNC_PDO().
  */
 void CO_TPDO_process(
         CO_TPDO_t              *TPDO,
         bool_t                  syncWas,
-        uint32_t                timeDifference_us);
+        uint32_t                timeDifference_us,
+        uint32_t               *timerNext_us);
 
 #ifdef __cplusplus
 }

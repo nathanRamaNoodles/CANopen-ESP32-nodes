@@ -1,7 +1,7 @@
 /**
- * CANopen TIME object protocol.
+ * CANopen Time-stamp protocol.
  *
- * @file        CO_TIME.c
+ * @file        CO_TIME.h
  * @ingroup     CO_TIME
  * @author      Julien PEYREGNE
  * @copyright   2019 - 2020 Janez Paternoster
@@ -23,23 +23,22 @@
  * limitations under the License.
  */
 
-
 #ifndef CO_TIME_H
 #define CO_TIME_H
 
 #include "CO_OD.h"
 
-
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-/**
+    /**
  * @defgroup CO_TIME TIME
- * @ingroup CO_CANopen
+ * @ingroup CO_CANopen_301
  * @{
  *
- * CANopen TIME object protocol.
+ * CANopen Time-stamp protocol.
  *
  * For CAN identifier see #CO_Default_CAN_ID_t
  *
@@ -73,41 +72,48 @@ extern "C" {
 
 #define TIME_MSG_LENGTH 6U
 
-/**
+    /**
  * TIME producer and consumer object.
  */
-typedef struct{
-    CO_EM_t            *em;             /**< From CO_TIME_init() */
-    uint8_t            *operatingState; /**< From CO_TIME_init() */
-	/** True, if device is TIME consumer. Calculated from _COB ID TIME Message_
+    typedef struct
+    {
+        CO_EM_t *em;                            /**< From CO_TIME_init() */
+        CO_NMT_internalState_t *operatingState; /**< From CO_TIME_init() */
+                                                /** True, if device is TIME consumer. Calculated from _COB ID TIME Message_
     variable from Object dictionary (index 0x1012). */
-    bool_t              isConsumer;
-	/** True, if device is TIME producer. Calculated from _COB ID TIME Message_
+        bool_t isConsumer;
+        /** True, if device is TIME producer. Calculated from _COB ID TIME Message_
     variable from Object dictionary (index 0x1012). */
-    bool_t              isProducer;
-    uint16_t            COB_ID;         /**< From CO_TIME_init() */
-    /** TIME period time in [milliseconds]. Set to TIME period to enable
+        bool_t isProducer;
+        uint16_t COB_ID; /**< From CO_TIME_init() */
+        /** TIME period time in [milliseconds]. Set to TIME period to enable
     timeout detection */
-    uint32_t            periodTime;
-    /** TIME period timeout time in [milliseconds].
+        uint32_t periodTime;
+        /** TIME period timeout time in [milliseconds].
     (periodTimeoutTime = periodTime * 1,5) */
-    uint32_t            periodTimeoutTime;
-    /** Variable indicates, if new TIME message received from CAN bus */
-    volatile void      *CANrxNew;
-    /** Timer for the TIME message in [microseconds].
+        uint32_t periodTimeoutTime;
+        /** Variable indicates, if new TIME message received from CAN bus */
+        volatile void *CANrxNew;
+        /** Timer for the TIME message in [microseconds].
     Set to zero after received or transmitted TIME message */
-    uint32_t            timer;
-    /** Set to nonzero value, if TIME with wrong data length is received from CAN */
-    uint16_t            receiveError;
-    CO_CANmodule_t     *CANdevRx;       /**< From CO_TIME_init() */
-    uint16_t            CANdevRxIdx;    /**< From CO_TIME_init() */
-	CO_CANmodule_t     *CANdevTx;       /**< From CO_TIME_init() */
-    uint16_t            CANdevTxIdx;    /**< From CO_TIME_init() */
-    CO_CANtx_t         *TXbuff;         /**< CAN transmit buffer */
-    TIME_OF_DAY         Time;
-}CO_TIME_t;
+        uint32_t timer;
+        /** Set to nonzero value, if TIME with wrong data length is received from CAN */
+        uint16_t receiveError;
+#if ((CO_CONFIG_TIME)&CO_CONFIG_FLAG_CALLBACK_PRE) || defined CO_DOXYGEN
+        /** From CO_TIME_initCallbackPre() or NULL */
+        void (*pFunctSignalPre)(void *object);
+        /** From CO_TIME_initCallbackPre() or NULL */
+        void *functSignalObjectPre;
+#endif
+        CO_CANmodule_t *CANdevRx; /**< From CO_TIME_init() */
+        uint16_t CANdevRxIdx;     /**< From CO_TIME_init() */
+        CO_CANmodule_t *CANdevTx; /**< From CO_TIME_init() */
+        uint16_t CANdevTxIdx;     /**< From CO_TIME_init() */
+        CO_CANtx_t *TXbuff;       /**< CAN transmit buffer */
+        TIME_OF_DAY Time;
+    } CO_TIME_t;
 
-/**
+    /**
  * Initialize TIME object.
  *
  * Function must be called in the communication reset section.
@@ -120,39 +126,60 @@ typedef struct{
  * @param TIMECyclePeriod TIME period in ms (may also be used in consumer mode for timeout detection (1.5x period)).
  * @param CANdevRx CAN device for TIME reception.
  * @param CANdevRxIdx Index of receive buffer in the above CAN device.
+ * @param CANdevTx CAN device for TIME transmission.
+ * @param CANdevTxIdx Index of transmit buffer in the above CAN device.
  *
  * @return #CO_ReturnError_t: CO_ERROR_NO or CO_ERROR_ILLEGAL_ARGUMENT.
  */
-CO_ReturnError_t CO_TIME_init(
-        CO_TIME_t              *TIME,
-        CO_EM_t                *em,
-        CO_SDO_t               *SDO,
-        uint8_t                *operatingState,
-        uint32_t                COB_ID_TIMEMessage,
-        uint32_t                TIMECyclePeriod,
-        CO_CANmodule_t         *CANdevRx,
-        uint16_t                CANdevRxIdx,
-        CO_CANmodule_t         *CANdevTx,
-        uint16_t                CANdevTxIdx);
+    CO_ReturnError_t CO_TIME_init(
+        CO_TIME_t *TIME,
+        CO_EM_t *em,
+        CO_SDO_t *SDO,
+        CO_NMT_internalState_t *operatingState,
+        uint32_t COB_ID_TIMEMessage,
+        uint32_t TIMECyclePeriod,
+        CO_CANmodule_t *CANdevRx,
+        uint16_t CANdevRxIdx,
+        CO_CANmodule_t *CANdevTx,
+        uint16_t CANdevTxIdx);
 
-/**
+#if ((CO_CONFIG_TIME)&CO_CONFIG_FLAG_CALLBACK_PRE) || defined CO_DOXYGEN
+    /**
+ * Initialize TIME callback function.
+ *
+ * Function initializes optional callback function, which should immediately
+ * start processing of CO_TIME_process() function.
+ * Callback is called after TIME message is received from the CAN bus.
+ *
+ * @param TIME This object.
+ * @param object Pointer to object, which will be passed to pFunctSignalPre(). Can be NULL
+ * @param pFunctSignalPre Pointer to the callback function. Not called if NULL.
+ */
+    void CO_TIME_initCallbackPre(
+        CO_TIME_t *TIME,
+        void *object,
+        void (*pFunctSignalPre)(void *object));
+#endif
+
+    /**
  * Process TIME communication.
  *
  * Function must be called cyclically.
  *
  * @param TIME This object.
- * @param timeDifference_ms Time difference from previous function call in [milliseconds].
+ * @param timeDifference_us Time difference from previous function call in [microseconds].
  *
  * @return 0: No special meaning.
  * @return 1: New TIME message recently received (consumer) / transmited (producer).
  */
-uint8_t CO_TIME_process(
-        CO_TIME_t              *TIME,
-        uint32_t                timeDifference_ms);
+    uint8_t CO_TIME_process(
+        CO_TIME_t *TIME,
+        uint32_t timeDifference_us);
+
+    /** @} */
 
 #ifdef __cplusplus
 }
 #endif /*__cplusplus*/
 
-/** @} */
 #endif

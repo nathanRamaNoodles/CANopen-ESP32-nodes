@@ -33,7 +33,7 @@ extern "C" {
 
 /**
  * @defgroup CO_Emergency Emergency
- * @ingroup CO_CANopen
+ * @ingroup CO_CANopen_301
  * @{
  *
  * CANopen Emergency protocol.
@@ -262,15 +262,20 @@ typedef struct{
     uint8_t            *bufReadPtr;         /**< Read pointer in the above buffer */
     uint8_t             bufFull;            /**< True if above buffer is full */
     uint8_t             wrongErrorReport;   /**< Error in arguments to CO_errorReport() */
-
-    /** From CO_EM_initCallback() or NULL */
-    void              (*pFunctSignal)(void);
+#if ((CO_CONFIG_EM) & CO_CONFIG_FLAG_CALLBACK_PRE) || defined CO_DOXYGEN
+    /** From CO_EM_initCallbackPre() or NULL */
+    void              (*pFunctSignalPre)(void *object);
+    /** From CO_EM_initCallbackPre() or NULL */
+    void               *functSignalObjectPre;
+#endif
+#if ((CO_CONFIG_EM) & CO_CONFIG_EM_CONSUMER) || defined CO_DOXYGEN
     /** From CO_EM_initCallbackRx() or NULL */
     void              (*pFunctSignalRx)(const uint16_t ident,
                                         const uint16_t errorCode,
                                         const uint8_t errorRegister,
                                         const uint8_t errorBit,
                                         const uint32_t infoCode);
+#endif
 }CO_EM_t;
 
 
@@ -323,10 +328,10 @@ bool_t CO_isError(CO_EM_t *em, const uint8_t errorBit);
 
 
 #ifdef CO_DOXYGEN
-/** Skip section, if CO_SDO.h is not included */
-    #define CO_SDO_H
+/** Skip section, if CO_SDOserver.h is not included */
+    #define CO_SDO_SERVER_H
 #endif
-#ifdef CO_SDO_H
+#ifdef CO_SDO_SERVER_H
 
 
 /**
@@ -339,8 +344,9 @@ typedef struct{
     uint32_t           *preDefErr;      /**< From CO_EM_init() */
     uint8_t             preDefErrSize;  /**< From CO_EM_init() */
     uint8_t             preDefErrNoOfErrors;/**< Number of active errors in preDefErr */
-    uint16_t            inhibitEmTimer; /**< Internal timer for emergency message */
+    uint32_t            inhibitEmTimer; /**< Internal timer for emergency message */
     CO_EM_t            *em;             /**< CO_EM_t sub object is included here */
+    uint16_t            CANerrorStatusOld;/**< Old CAN error status bitfield */
     CO_CANmodule_t     *CANdev;         /**< From CO_EM_init() */
     CO_CANtx_t         *CANtxBuff;      /**< CAN transmit buffer */
 }CO_EMpr_t;
@@ -386,33 +392,42 @@ CO_ReturnError_t CO_EM_init(
         uint16_t                CANidTxEM);
 
 
+#if ((CO_CONFIG_EM) & CO_CONFIG_FLAG_CALLBACK_PRE) || defined CO_DOXYGEN
 /**
  * Initialize Emergency callback function.
  *
- * Function initializes optional callback function, which executes after
- * error condition is changed. Function may wake up external task,
- * which processes mainline CANopen functions.
+ * Function initializes optional callback function, which should immediately
+ * start processing of CO_EM_process() function.
+ * Callback is called from CO_errorReport() or CO_errorReset() function. Those
+ * functions are fast and may be called from any thread. Callback should
+ * immediately start mainline thread, which calls CO_EM_process() function.
  *
  * @param em This object.
+ * @param object Pointer to object, which will be passed to pFunctSignal(). Can be NULL
  * @param pFunctSignal Pointer to the callback function. Not called if NULL.
  */
-void CO_EM_initCallback(
+void CO_EM_initCallbackPre(
         CO_EM_t               *em,
-        void                  (*pFunctSignal)(void));
+        void                   *object,
+        void                  (*pFunctSignal)(void *object));
+#endif
 
 
+#if ((CO_CONFIG_EM) & CO_CONFIG_EM_CONSUMER) || defined CO_DOXYGEN
 /**
  * Initialize Emergency received callback function.
  *
  * Function initializes optional callback function, which executes after
- * error condition is received. Function may wake up external task,
- * which processes mainline CANopen functions.
+ * error condition is received.
+ *
+ * _ident_ argument from callback contains CAN-ID of the emergency message. If
+ * _ident_ == 0, then emergency message was sent from this device.
  *
  * @remark Depending on the CAN driver implementation, this function is called
- * inside an ISR
+ * inside an ISR or inside a mainline. Must be thread safe.
  *
  * @param em This object.
- * @param pFunctSignal Pointer to the callback function. Not called if NULL.
+ * @param pFunctSignalRx Pointer to the callback function. Not called if NULL.
  */
 void CO_EM_initCallbackRx(
         CO_EM_t                *em,
@@ -421,6 +436,7 @@ void CO_EM_initCallbackRx(
                                                 const uint8_t errorRegister,
                                                 const uint8_t errorBit,
                                                 const uint32_t infoCode));
+#endif
 
 
 /**
@@ -432,16 +448,16 @@ void CO_EM_initCallbackRx(
  *
  * @param emPr This object.
  * @param NMTisPreOrOperational True if this node is NMT_PRE_OPERATIONAL or NMT_OPERATIONAL.
- * @param timeDifference_100us Time difference from previous function call in [100 * microseconds].
- * @param emInhTime _Inhibit time EMCY_ (object dictionary, index 0x1015).
- * @param timerNext_ms Return value - info to OS - see CO_process().
+ * @param timeDifference_us Time difference from previous function call in [microseconds].
+ * @param emInhTime _Inhibit time EMCY_ in [100*us] (object dictionary, index 0x1015).
+ * @param [out] timerNext_us info to OS - see CO_process().
  */
 void CO_EM_process(
         CO_EMpr_t              *emPr,
         bool_t                  NMTisPreOrOperational,
-        uint16_t                timeDifference_100us,
+        uint32_t                timeDifference_us,
         uint16_t                emInhTime,
-        uint16_t               *timerNext_ms);
+        uint32_t               *timerNext_us);
 
 
 #endif

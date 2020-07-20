@@ -1,5 +1,5 @@
 /**
- * CANopen LSS Master/Slave protocol.
+ * CANopen Layer Setting Service - master protocol.
  *
  * @file        CO_LSSmaster.h
  * @ingroup     CO_LSS
@@ -32,17 +32,14 @@
 extern "C" {
 #endif
 
-#if CO_NO_LSS_CLIENT == 1
-
 #include "CO_LSS.h"
 
 /**
- * @addtogroup CO_LSS
  * @defgroup CO_LSSmaster LSS Master
- * @ingroup CO_LSS
+ * @ingroup CO_CANopen_305
  * @{
  *
- * CANopen Layer Setting Service - client protocol
+ * CANopen Layer Setting Service - master protocol.
  *
  * The client/master can use the following services
  * - node selection via LSS address
@@ -92,7 +89,7 @@ extern "C" {
  */
 typedef enum {
     CO_LSSmaster_SCAN_FINISHED       = 2,    /**< Scanning finished successful */
-    CO_LSSmaster_WAIT_SLAVE          = 1,    /**< No response arrived from server yet */
+    CO_LSSmaster_WAIT_SLAVE          = 1,    /**< No response arrived from slave yet */
     CO_LSSmaster_OK                  = 0,    /**< Success, end of communication */
     CO_LSSmaster_TIMEOUT             = -1,   /**< No reply received */
     CO_LSSmaster_ILLEGAL_ARGUMENT    = -2,   /**< Invalid argument */
@@ -108,11 +105,11 @@ typedef enum {
  * LSS master object.
  */
 typedef struct{
-    uint16_t         timeout;          /**< LSS response timeout in ms */
+    uint32_t         timeout_us;       /**< LSS response timeout in us */
 
     uint8_t          state;            /**< Node is currently selected */
     uint8_t          command;          /**< Active command */
-    uint16_t         timeoutTimer;     /**< Timeout timer for LSS communication */
+    uint32_t         timeoutTimer;     /**< Timeout timer for LSS communication */
 
     uint8_t          fsState;          /**< Current state of fastscan master state machine */
     uint8_t          fsLssSub;         /**< Current state of node state machine */
@@ -121,11 +118,11 @@ typedef struct{
 
     volatile void   *CANrxNew;         /**< Indication if new LSS message is received from CAN bus. It needs to be cleared when received message is completely processed. */
     uint8_t          CANrxData[8];     /**< 8 data bytes of the received message */
-
-    void           (*pFunctSignal)(void *object); /**< From CO_LSSmaster_initCallback() or NULL */
+#if ((CO_CONFIG_LSS) & CO_CONFIG_FLAG_CALLBACK_PRE) || defined CO_DOXYGEN
+    void           (*pFunctSignal)(void *object); /**< From CO_LSSmaster_initCallbackPre() or NULL */
     void            *functSignalObject;/**< Pointer to object */
-
-    CO_CANmodule_t  *CANdevTx;         /**< From #CO_LSSslave_init() */
+#endif
+    CO_CANmodule_t  *CANdevTx;         /**< From CO_LSSmaster_init() */
     CO_CANtx_t      *TXbuff;           /**< CAN transmit buffer */
 }CO_LSSmaster_t;
 
@@ -134,7 +131,9 @@ typedef struct{
  * Default timeout for LSS slave in ms. This is the same as for SDO. For more
  * info about LSS timeout see #CO_LSSmaster_changeTimeout()
  */
+#ifndef CO_LSSmaster_DEFAULT_TIMEOUT
 #define CO_LSSmaster_DEFAULT_TIMEOUT 1000U /* ms */
+#endif
 
 
 /**
@@ -187,21 +186,24 @@ void CO_LSSmaster_changeTimeout(
         uint16_t                timeout_ms);
 
 
+#if ((CO_CONFIG_LSS) & CO_CONFIG_FLAG_CALLBACK_PRE) || defined CO_DOXYGEN
 /**
- * Initialize LSSserverRx callback function.
+ * Initialize LSSmasterRx callback function.
  *
- * Function initializes optional callback function, which is called after new
- * message is received from the CAN bus. Function may wake up external task,
- * which processes mainline CANopen functions.
+ * Function initializes optional callback function, which should immediately
+ * start further LSS processing. Callback is called after LSS message is
+ * received from the CAN bus. It should signal the RTOS to resume corresponding
+ * task.
  *
  * @param LSSmaster This object.
  * @param object Pointer to object, which will be passed to pFunctSignal(). Can be NULL
  * @param pFunctSignal Pointer to the callback function. Not called if NULL.
  */
-void CO_LSSmaster_initCallback(
+void CO_LSSmaster_initCallbackPre(
         CO_LSSmaster_t         *LSSmaster,
         void                   *object,
         void                  (*pFunctSignal)(void *object));
+#endif
 
 
 /**
@@ -215,15 +217,15 @@ void CO_LSSmaster_initCallback(
  * @remark Only one selection can be active at any time.
  *
  * @param LSSmaster This object.
- * @param timeDifference_ms Time difference from previous function call in
- * [milliseconds]. Zero when request is started.
+ * @param timeDifference_us Time difference from previous function call in
+ * [microseconds]. Zero when request is started.
  * @param lssAddress LSS target address. If NULL, all nodes are selected
  * @return #CO_LSSmaster_ILLEGAL_ARGUMENT,  #CO_LSSmaster_INVALID_STATE,
  * #CO_LSSmaster_WAIT_SLAVE, #CO_LSSmaster_OK, #CO_LSSmaster_TIMEOUT
  */
 CO_LSSmaster_return_t CO_LSSmaster_switchStateSelect(
         CO_LSSmaster_t         *LSSmaster,
-        uint16_t                timeDifference_ms,
+        uint32_t                timeDifference_us,
         CO_LSS_address_t       *lssAddress);
 
 
@@ -254,8 +256,8 @@ CO_LSSmaster_return_t CO_LSSmaster_switchStateDeselect(
  * Function is non-blocking.
  *
  * @param LSSmaster This object.
- * @param timeDifference_ms Time difference from previous function call in
- * [milliseconds]. Zero when request is started.
+ * @param timeDifference_us Time difference from previous function call in
+ * [microseconds]. Zero when request is started.
  * @param bit new bit rate
  * @return #CO_LSSmaster_ILLEGAL_ARGUMENT,  #CO_LSSmaster_INVALID_STATE,
  * #CO_LSSmaster_WAIT_SLAVE, #CO_LSSmaster_OK, #CO_LSSmaster_TIMEOUT,
@@ -263,7 +265,7 @@ CO_LSSmaster_return_t CO_LSSmaster_switchStateDeselect(
  */
 CO_LSSmaster_return_t CO_LSSmaster_configureBitTiming(
         CO_LSSmaster_t         *LSSmaster,
-        uint16_t                timeDifference_ms,
+        uint32_t                timeDifference_us,
         uint16_t                bit);
 
 
@@ -278,8 +280,8 @@ CO_LSSmaster_return_t CO_LSSmaster_configureBitTiming(
  * Function is non-blocking.
  *
  * @param LSSmaster This object.
- * @param timeDifference_ms Time difference from previous function call in
- * [milliseconds]. Zero when request is started.
+ * @param timeDifference_us Time difference from previous function call in
+ * [microseconds]. Zero when request is started.
  * @param nodeId new node ID. Special value #CO_LSS_NODE_ID_ASSIGNMENT can be
  * used to invalidate node ID.
  * @return #CO_LSSmaster_ILLEGAL_ARGUMENT,  #CO_LSSmaster_INVALID_STATE,
@@ -288,7 +290,7 @@ CO_LSSmaster_return_t CO_LSSmaster_configureBitTiming(
  */
 CO_LSSmaster_return_t CO_LSSmaster_configureNodeId(
         CO_LSSmaster_t         *LSSmaster,
-        uint16_t                timeDifference_ms,
+        uint32_t                timeDifference_us,
         uint8_t                 nodeId);
 
 
@@ -304,15 +306,15 @@ CO_LSSmaster_return_t CO_LSSmaster_configureNodeId(
  * Function is non-blocking.
  *
  * @param LSSmaster This object.
- * @param timeDifference_ms Time difference from previous function call in
- * [milliseconds]. Zero when request is started.
+ * @param timeDifference_us Time difference from previous function call in
+ * [microseconds]. Zero when request is started.
  * @return #CO_LSSmaster_ILLEGAL_ARGUMENT,  #CO_LSSmaster_INVALID_STATE,
  * #CO_LSSmaster_WAIT_SLAVE, #CO_LSSmaster_OK, #CO_LSSmaster_TIMEOUT,
  * #CO_LSSmaster_OK_MANUFACTURER, #CO_LSSmaster_OK_ILLEGAL_ARGUMENT
  */
 CO_LSSmaster_return_t CO_LSSmaster_configureStore(
         CO_LSSmaster_t         *LSSmaster,
-        uint16_t                timeDifference_ms);
+        uint32_t                timeDifference_us);
 
 
 /**
@@ -351,22 +353,23 @@ CO_LSSmaster_return_t CO_LSSmaster_ActivateBit(
  * Function is non-blocking.
  *
  * @param LSSmaster This object.
- * @param timeDifference_ms Time difference from previous function call in
- * [milliseconds]. Zero when request is started.
- * @param lssAddress [out] read result when function returns successfully
+ * @param timeDifference_us Time difference from previous function call in
+ * [microseconds]. Zero when request is started.
+ * @param [out] lssAddress read result when function returns successfully
  * @return #CO_LSSmaster_ILLEGAL_ARGUMENT,  #CO_LSSmaster_INVALID_STATE,
  * #CO_LSSmaster_WAIT_SLAVE, #CO_LSSmaster_OK, #CO_LSSmaster_TIMEOUT
  */
 CO_LSSmaster_return_t CO_LSSmaster_InquireLssAddress(
         CO_LSSmaster_t         *LSSmaster,
-        uint16_t                timeDifference_ms,
+        uint32_t                timeDifference_us,
         CO_LSS_address_t       *lssAddress);
 
 
 /**
- * Request LSS inquire node ID
+ * Request LSS inquire node ID or part of LSS address
  *
- * The node ID value is read from the node.
+ * The node-ID, identity vendor-ID, product-code, revision-number or
+ * serial-number value is read from the node.
  *
  * This function needs one specific node to be selected.
  *
@@ -374,16 +377,18 @@ CO_LSSmaster_return_t CO_LSSmaster_InquireLssAddress(
  * Function is non-blocking.
  *
  * @param LSSmaster This object.
- * @param timeDifference_ms Time difference from previous function call in
- * [milliseconds]. Zero when request is started.
- * @param nodeId [out] read result when function returns successfully
+ * @param timeDifference_us Time difference from previous function call in
+ * [microseconds]. Zero when request is started.
+ * @param lssInquireCs One of CO_LSS_INQUIRE_xx commands from #CO_LSS_cs_t.
+ * @param [out] value read result when function returns successfully
  * @return #CO_LSSmaster_ILLEGAL_ARGUMENT,  #CO_LSSmaster_INVALID_STATE,
  * #CO_LSSmaster_WAIT_SLAVE, #CO_LSSmaster_OK, #CO_LSSmaster_TIMEOUT
  */
-CO_LSSmaster_return_t CO_LSSmaster_InquireNodeId(
+CO_LSSmaster_return_t CO_LSSmaster_Inquire(
         CO_LSSmaster_t         *LSSmaster,
-        uint16_t                timeDifference_ms,
-        uint8_t                *nodeId);
+        uint32_t                timeDifference_us,
+        CO_LSS_cs_t             lssInquireCs,
+        uint32_t               *value);
 
 
 /**
@@ -451,8 +456,8 @@ fastscan.scan[CO_LSS_FASTSCAN_SERIAL] = CO_LSSmaster_FS_SCAN;
  * Function is non-blocking.
  *
  * @param LSSmaster This object.
- * @param timeDifference_ms Time difference from previous function call in
- * [milliseconds]. Zero when request is started.
+ * @param timeDifference_us Time difference from previous function call in
+ * [microseconds]. Zero when request is started.
  * @param fastscan struct according to #CO_LSSmaster_fastscan_t.
  * @return #CO_LSSmaster_ILLEGAL_ARGUMENT,  #CO_LSSmaster_INVALID_STATE,
  * #CO_LSSmaster_WAIT_SLAVE, #CO_LSSmaster_SCAN_FINISHED, #CO_LSSmaster_SCAN_NOACK,
@@ -460,25 +465,12 @@ fastscan.scan[CO_LSS_FASTSCAN_SERIAL] = CO_LSSmaster_FS_SCAN;
  */
 CO_LSSmaster_return_t CO_LSSmaster_IdentifyFastscan(
         CO_LSSmaster_t                  *LSSmaster,
-        uint16_t                         timeDifference_ms,
+        uint32_t                         timeDifference_us,
         CO_LSSmaster_fastscan_t         *fastscan);
 
-
-#else /* CO_NO_LSS_CLIENT == 1 */
-
-/**
- * @addtogroup CO_LSS
- * @{
- * If you need documetation for LSS master usage, add "CO_NO_LSS_CLIENT=1" to doxygen
- * "PREDEFINED" variable.
- *
- */
-
-#endif /* CO_NO_LSS_CLIENT == 1 */
-
+/** @} */ /*@defgroup CO_LSSmaster*/
 #ifdef __cplusplus
 }
 #endif /*__cplusplus*/
 
-/** @} */
-#endif
+#endif /*CO_LSSmaster_H*/

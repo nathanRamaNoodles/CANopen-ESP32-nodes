@@ -1,5 +1,5 @@
 /**
- * CANopen LSS Master/Slave protocol.
+ * CANopen Layer Setting Services protocol (common).
  *
  * @file        CO_LSS.h
  * @ingroup     CO_LSS
@@ -33,10 +33,10 @@ extern "C" {
 
 /**
  * @defgroup CO_LSS LSS
- * @ingroup CO_CANopen
+ * @ingroup CO_CANopen_305
  * @{
  *
- * CANopen Layer Setting Services protocol
+ * CANopen Layer Setting Services protocol (common).
  *
  * LSS protocol is according to CiA DSP 305 V3.0.0.
  *
@@ -64,8 +64,6 @@ extern "C" {
  *
  * For CAN identifiers see #CO_Default_CAN_ID_t
  */
-
-#if CO_NO_LSS_CLIENT == 1 || CO_NO_LSS_SERVER == 1
 
 /**
  * LSS protocol command specifiers
@@ -95,16 +93,6 @@ typedef enum {
     CO_LSS_INQUIRE_SERIAL           = 0x5DU, /**< Inquire identity serial-number protocol */
     CO_LSS_INQUIRE_NODE_ID          = 0x5EU, /**< Inquire node-ID protocol */
 } CO_LSS_cs_t;
-
-/**
- * Macro to get service type group from command specifier
- * @{*/
-#define CO_LSS_CS_SERVICE_IS_SWITCH_GLOBAL(cs) (cs == CO_LSS_SWITCH_STATE_GLOBAL)
-#define CO_LSS_CS_SERVICE_IS_SWITCH_STATE_SELECTIVE(cs) (cs >= CO_LSS_SWITCH_STATE_SEL_VENDOR && cs <= CO_LSS_SWITCH_STATE_SEL)
-#define CO_LSS_CS_SERVICE_IS_CONFIG(cs) (cs >= CO_LSS_CFG_NODE_ID && cs <= CO_LSS_CFG_STORE)
-#define CO_LSS_CS_SERVICE_IS_INQUIRE(cs) (cs >= CO_LSS_INQUIRE_VENDOR && cs <= CO_LSS_INQUIRE_NODE_ID)
-#define CO_LSS_CS_SERVICE_IS_IDENT(cs) (cs==CO_LSS_IDENT_SLAVE || cs==CO_LSS_IDENT_FASTSCAN)
-/**@}*/
 
 /**
  * Error codes for Configure node ID protocol
@@ -243,11 +231,9 @@ static const uint16_t CO_LSS_bitTimingTableLookup[]  = {
       a1.identity.serialNumber == a2.identity.serialNumber &&       \
       a1.identity.vendorID == a2.identity.vendorID)
 
-#endif /* CO_NO_LSS_CLIENT == 1 || CO_NO_LSS_SERVER == 1 */
-
+/** @} */ /*@defgroup CO_LSS*/
 #ifdef __cplusplus
 }
 #endif /*__cplusplus*/
 
-/** @} */
-#endif
+#endif /*CO_LSS_H*/
