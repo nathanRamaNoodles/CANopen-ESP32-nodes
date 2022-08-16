@@ -293,13 +293,13 @@ CO_SDOclient_return_t CO_SDOclient_setup(
 
 
 /******************************************************************************/
-static void CO_SDOclient_abort(CO_SDOclient_t *SDO_C, uint32_t code){
+static void CO_SDOclient_abort(CO_SDOclient_t *SDO_C, uint32_t code, uint8_t abort_id){
     SDO_C->CANtxBuff->data[0] = 0x80;
     SDO_C->CANtxBuff->data[1] = SDO_C->index & 0xFF;
     SDO_C->CANtxBuff->data[2] = (SDO_C->index>>8) & 0xFF;
     SDO_C->CANtxBuff->data[3] = SDO_C->subIndex;
     CO_memcpySwap4(&SDO_C->CANtxBuff->data[4], &code);
-    CO_CANsend(SDO_C->CANdevTx, SDO_C->CANtxBuff, 600);
+    CO_CANsend(SDO_C->CANdevTx, SDO_C->CANtxBuff, 600 + abort_id);
     SDO_C->state = SDO_STATE_NOTDEFINED;
     CLEAR_CANrxNew(SDO_C->CANrxNew);
 }
@@ -617,7 +617,7 @@ CO_SDOclient_return_t CO_SDOclientDownload(
     }
     if(SDO_C->timeoutTimer >= SDOtimeoutTime){ /*  communication TMO */
         *pSDOabortCode = CO_SDO_AB_TIMEOUT;
-        CO_SDOclient_abort(SDO_C, *pSDOabortCode);
+        CO_SDOclient_abort(SDO_C, *pSDOabortCode, 1);
         return CO_SDOcli_endedWithTimeout;
     }
 
@@ -631,7 +631,7 @@ CO_SDOclient_return_t CO_SDOclientDownload(
         /*  ABORT */
         case SDO_STATE_ABORT:{
             SDO_C->state = SDO_STATE_NOTDEFINED;
-            CO_SDOclient_abort (SDO_C, *pSDOabortCode);
+            CO_SDOclient_abort (SDO_C, *pSDOabortCode, 2);
             ret = CO_SDOcli_endedWithClientAbort;
             break;
         }
@@ -1112,7 +1112,7 @@ CO_SDOclient_return_t CO_SDOclientUpload(
     }
     if(SDO_C->timeoutTimer >= SDOtimeoutTime){ /*  communication TMO */
         *pSDOabortCode = CO_SDO_AB_TIMEOUT;
-        CO_SDOclient_abort(SDO_C, *pSDOabortCode);
+        CO_SDOclient_abort(SDO_C, *pSDOabortCode, 3);
         return CO_SDOcli_endedWithTimeout;
     }
     if(SDO_C->timeoutTimerBLOCK >= (SDOtimeoutTime/2)){ /*  block TMO */
@@ -1129,7 +1129,7 @@ CO_SDOclient_return_t CO_SDOclientUpload(
     switch (SDO_C->state){
         case SDO_STATE_ABORT:{
             SDO_C->state = SDO_STATE_NOTDEFINED;
-            CO_SDOclient_abort (SDO_C, *pSDOabortCode);
+            CO_SDOclient_abort (SDO_C, *pSDOabortCode, 4);
             ret = CO_SDOcli_endedWithClientAbort;
             break;
         }
