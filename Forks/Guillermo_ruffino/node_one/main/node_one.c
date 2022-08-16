@@ -110,7 +110,7 @@ void mainTask(void *pvParameter)
 
 						uint8_t sdo_rx_data_buffer[13] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 						// const twai_message_t msg_buffer = {.identifier = 0x61A, .data_length_code = 8, .data = {0x2F, 0x10,  0x08, 0x00, 0x00, 0x00, 0x00, 0x00} };
-
+					
 
 				while (reset == CO_RESET_NOT)
 				{
@@ -132,7 +132,6 @@ void mainTask(void *pvParameter)
 																													sdo_rx_data_buffer[12]);
 																													
 						/* loop for normal program execution ******************************************/
-						int i = 5;
 						// /* Nonblocking application code may go here. */
 						// if (counter == 0)
 						// {		
