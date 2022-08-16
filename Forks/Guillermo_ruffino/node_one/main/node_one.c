@@ -115,7 +115,7 @@ void mainTask(void *pvParameter)
 				while (reset == CO_RESET_NOT)
 				{
 						ESP_LOGE("maintask", "beggining of a While");
-						CO_SDOclientUploadInitiate(CO->SDOclient[0], 0x1008, 0xFF, sdo_rx_data_buffer, 13, 0);
+						CO_SDOclientUploadInitiate(CO->SDOclient[0], 0x1008, 0, sdo_rx_data_buffer, 13, 0);
 								dunker_coProcessUploadSDO();
 								ESP_LOGE("mainTask", "Slave device name: %d %d %d %d %d %d %d %d %d %d %d %d %d", sdo_rx_data_buffer[0],
 																													sdo_rx_data_buffer[1],
