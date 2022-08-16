@@ -399,8 +399,9 @@ CO_ReturnError_t CO_CANsend(CO_CANmodule_t *CANmodule, CO_CANtx_t *buffer, int c
         twai_hal_frame_t tx_frame;
         /* Transmit esp can message.  */
         temp_can_message.data[0] = 0x2C; 
-        if (can_transmit(&temp_can_message, &tx_frame, pdMS_TO_TICKS(CAN_TICKS_TO_WAIT)) == ESP_OK)
+        if (can_transmit(&temp_can_message,/* &tx_frame, */ pdMS_TO_TICKS(CAN_TICKS_TO_WAIT)) == ESP_OK)
         {
+            //
             //  ESP_LOGI("CANsend", "ID: %d %d,DLC %d ,  Data %d,%d,%d,%d,%d,%d,%d,%d   Data hex: %x,%x,%x,%x,%x,%x,%x,%x", tx_frame.standard.id[0],
             //                                                                                                       tx_frame.standard.id[1],
             //                                                                                                         tx_frame.dlc,
