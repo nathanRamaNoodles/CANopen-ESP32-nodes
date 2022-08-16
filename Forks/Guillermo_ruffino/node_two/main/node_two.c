@@ -157,20 +157,20 @@ void mainTask(void *pvParameter)
 						if (gpio_get_level(GPIO_NUM_33))
 								OD_readInput8Bit[1] |= 4;
 
-						uint32_t val = adc1_get_raw(ADC1_CHANNEL_0); // GPIO36
+						 uint32_t val = adc1_get_raw(ADC1_CHANNEL_0); // GPIO36
 						OD_readInput8Bit[4] = val & 0x000000ff;
 						OD_readInput8Bit[5] = (val & 0x0000ff00) >> 8;
 						OD_readInput8Bit[6] = (val & 0x00ff0000) >> 16;
 						OD_readInput8Bit[7] = (val & 0xff000000) >> 24;
 
-						if (timer1msCopy % 1000 == 0) {
-								ESP_LOGI("ADC", "val: %d", val);
-						}
+						// if (timer1msCopy % 1000 == 0) {
+						// 		ESP_LOGI("ADC", "val: %d", val);
+						// }
 
 						/* Process EEPROM */
 
 						/* optional sleep for short time */
-						vTaskDelay(pdMS_TO_TICKS(5));
+						vTaskDelay(pdMS_TO_TICKS(1000));
 				}
 		}
 		/* program exit

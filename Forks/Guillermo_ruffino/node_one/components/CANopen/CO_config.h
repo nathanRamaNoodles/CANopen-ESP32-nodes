@@ -3,8 +3,8 @@
 
 //####  CAN CONFIG  ####
 
-#define CAN_TX_IO (12)  /** CAN TX pin */
-#define CAN_RX_IO (32) /** CAN RX pin */
+#define CAN_TX_IO (21)  /** CAN TX pin */
+#define CAN_RX_IO (22) /** CAN RX pin */
 #define CAN_TX_QUEUE_LENGTH (5) /** CAN TX buffer size */
 #define CAN_RX_QUEUE_LENGTH (5) /** CAN RX buffer size */
 

@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-
+#include "esp_log.h"
 #include "CO_driver.h"
 #include "CO_SDO.h"
 #include "CO_Emergency.h"
@@ -846,7 +846,7 @@ uint8_t CO_TPDOisCOS(CO_TPDO_t *TPDO){
 
 //#define TPDO_CALLS_EXTENSION
 /******************************************************************************/
-int16_t CO_TPDOsend(CO_TPDO_t *TPDO){
+int16_t CO_TPDOsend(CO_TPDO_t *TPDO, int tpdo_flag){
     int16_t i;
     uint8_t* pPDOdataByte;
     uint8_t** ppODdataByte;
@@ -890,7 +890,7 @@ int16_t CO_TPDOsend(CO_TPDO_t *TPDO){
 
     TPDO->sendRequest = 0;
 
-    return CO_CANsend(TPDO->CANdevTx, TPDO->CANtxBuff);
+    return CO_CANsend(TPDO->CANdevTx, TPDO->CANtxBuff, 400 + tpdo_flag);
 }
 
 //#define RPDO_CALLS_EXTENSION
@@ -978,7 +978,8 @@ void CO_TPDO_process(
         /* Send PDO by application request or by Event timer */
         if(TPDO->TPDOCommPar->transmissionType >= 253){
             if(TPDO->inhibitTimer == 0 && (TPDO->sendRequest || (TPDO->TPDOCommPar->eventTimer && TPDO->eventTimer == 0))){
-                if(CO_TPDOsend(TPDO) == CO_ERROR_NO){
+                ESP_LOGE("mainTask", "TPDO buffer id %d ", TPDO->CANtxBuff->ident);
+                if(CO_TPDOsend(TPDO, 1) == CO_ERROR_NO){
                     /* successfully sent */
                     TPDO->inhibitTimer = ((uint32_t) TPDO->TPDOCommPar->inhibitTime) * 100;
                     TPDO->eventTimer = ((uint32_t) TPDO->TPDOCommPar->eventTimer) * 1000;
@@ -990,7 +991,7 @@ void CO_TPDO_process(
         else if(TPDO->SYNC && syncWas){
             /* send synchronous acyclic PDO */
             if(TPDO->TPDOCommPar->transmissionType == 0){
-                if(TPDO->sendRequest) CO_TPDOsend(TPDO);
+                if(TPDO->sendRequest) CO_TPDOsend(TPDO, 2);
             }
             /* send synchronous cyclic PDO */
             else{
@@ -1005,13 +1006,13 @@ void CO_TPDO_process(
                 if(TPDO->syncCounter == 254){
                     if(TPDO->SYNC->counter == TPDO->TPDOCommPar->SYNCStartValue){
                         TPDO->syncCounter = TPDO->TPDOCommPar->transmissionType;
-                        CO_TPDOsend(TPDO);
+                        CO_TPDOsend(TPDO, 3);
                     }
                 }
                 /* Send PDO after every N-th Sync */
                 else if(--TPDO->syncCounter == 0){
                     TPDO->syncCounter = TPDO->TPDOCommPar->transmissionType;
-                    CO_TPDOsend(TPDO);
+                    CO_TPDOsend(TPDO, 4);
                 }
             }
         }

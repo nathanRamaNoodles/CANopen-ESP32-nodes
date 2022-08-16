@@ -221,7 +221,7 @@ CO_NMT_reset_cmd_t CO_NMT_process(
         NMT->HBproducerTimer = 0;
 
         NMT->HB_TXbuff->data[0] = NMT->operatingState;
-        CO_CANsend(NMT->HB_CANdev, NMT->HB_TXbuff);
+        CO_CANsend(NMT->HB_CANdev, NMT->HB_TXbuff, 300);
 
         if(NMT->operatingState == CO_NMT_INITIALIZING){
             if(HBtime > NMT->firstHBTime) NMT->HBproducerTimer = HBtime - NMT->firstHBTime;

@@ -26,7 +26,7 @@
 
 
 #include "CANopen.h"
-
+#include "esp_log.h"
 
 /* If defined, global variables will be used, otherwise CANopen objects will
    be generated with calloc(). */
@@ -238,12 +238,12 @@ CO_ReturnError_t CO_init(
                 default:
                     error = CO_ERROR_ILLEGAL_ARGUMENT;
                     break;
-
+ 
             }
         }
 
         if(error == CO_ERROR_NO)
-            return CO_CANsend(co->CANmodule[0], NMTM_txBuff); /* 0 = success */
+            return CO_CANsend(co->CANmodule[0], NMTM_txBuff, 100); /* 0 = success */
         else
         {
             return error;
@@ -771,6 +771,7 @@ CO_ReturnError_t CO_init(
 
     err = CO_CANopenInit(nodeId);
     if (err) {
+        ESP_LOGE("mainTask", "failedto canopeninit");
         CO_delete(CANdriverState);
         return err;
     }
@@ -875,7 +876,7 @@ CO_NMT_reset_cmd_t CO_process(
             timeDifference_ms * 10,
             OD_inhibitTimeEMCY,
             timerNext_ms);
-
+        ESP_LOGE("CO_process", "EM  process init");
 
     reset = CO_NMT_process(
             co->NMT,
@@ -885,12 +886,13 @@ CO_NMT_reset_cmd_t CO_process(
             OD_errorRegister,
             OD_errorBehavior,
             timerNext_ms);
-
+ESP_LOGE("CO_process", "NMT  process init");
 
     CO_HBconsumer_process(
             co->HBcons,
             NMTisPreOrOperational,
             timeDifference_ms);
+            ESP_LOGE("CO_process", "HB  process init");
 
 #if CO_NO_TIME == 1
     CO_TIME_process(

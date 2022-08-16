@@ -319,7 +319,7 @@ void CO_EM_process(
             }
 
             /* send CAN message */
-            CO_CANsend(emPr->CANdev, emPr->CANtxBuff);
+            CO_CANsend(emPr->CANdev, emPr->CANtxBuff, 200);
         }
 
         /* check again after inhibit time elapsed */

@@ -27,7 +27,7 @@
 #include "CO_driver.h"
 #include "CO_SDO.h"
 #include "crc16-ccitt.h"
-
+#include "esp_log.h"
 
 /* Client command specifier, see DS301 */
 #define CCS_DOWNLOAD_INITIATE          1U
@@ -241,6 +241,24 @@ static void CO_SDO_receive(void *object, const CO_CANrxMsg_t *msg){
             SDO->pFunctSignal();
         }
     }
+    ESP_LOGI("SDO_Receive", "Received ID: %d ID Hex: %x Data: %d %d %d %d %d %d %d %d Data hex: %x %x %x %x %x %x %x %x", SDO->nodeId,
+                                                                                                                            SDO->nodeId,
+                                                                                                                            SDO->CANrxData[0],
+                                                                                                                            SDO->CANrxData[1],
+                                                                                                                            SDO->CANrxData[2],
+                                                                                                                            SDO->CANrxData[3],
+                                                                                                                            SDO->CANrxData[4],
+                                                                                                                            SDO->CANrxData[5],
+                                                                                                                            SDO->CANrxData[6],
+                                                                                                                            SDO->CANrxData[7],
+                                                                                                                            SDO->CANrxData[0],
+                                                                                                                            SDO->CANrxData[1],
+                                                                                                                            SDO->CANrxData[2],
+                                                                                                                            SDO->CANrxData[3],
+                                                                                                                            SDO->CANrxData[4],
+                                                                                                                            SDO->CANrxData[5],
+                                                                                                                            SDO->CANrxData[6],
+                                                                                                                            SDO->CANrxData[7]);
 }
 
 
@@ -758,7 +776,7 @@ static void CO_SDO_abort(CO_SDO_t *SDO, uint32_t code){
     CO_memcpySwap4(&SDO->CANtxBuff->data[4], &code);
     SDO->state = CO_SDO_ST_IDLE;
     CLEAR_CANrxNew(SDO->CANrxNew);
-    CO_CANsend(SDO->CANdevTx, SDO->CANtxBuff);
+    CO_CANsend(SDO->CANdevTx, SDO->CANtxBuff, 500);
 }
 
 
@@ -1430,7 +1448,7 @@ int8_t CO_SDO_process(
             }
 
             /* send response */
-            CO_CANsend(SDO->CANdevTx, SDO->CANtxBuff);
+            CO_CANsend(SDO->CANdevTx, SDO->CANtxBuff, 510);
 
             /* Set timerNext_ms to 0 to inform OS to call this function again without delay. */
             if(timerNext_ms != NULL){
@@ -1467,7 +1485,7 @@ int8_t CO_SDO_process(
     /* free buffer and send message */
     CLEAR_CANrxNew(SDO->CANrxNew);
     if(sendResponse) {
-        CO_CANsend(SDO->CANdevTx, SDO->CANtxBuff);
+        CO_CANsend(SDO->CANdevTx, SDO->CANtxBuff, 520);
     }
 
     if(SDO->state != CO_SDO_ST_IDLE){

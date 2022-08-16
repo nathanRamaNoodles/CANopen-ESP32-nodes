@@ -34,7 +34,7 @@
 
 static const can_general_config_t g_config =
     CAN_GENERAL_CONFIG_DEFAULT(CAN_TX_IO, CAN_RX_IO, CAN_MODE_NORMAL);
-static const can_timing_config_t t_config = CAN_TIMING_CONFIG_1MBITS();
+static const can_timing_config_t t_config = CAN_TIMING_CONFIG_125KBITS();
 static const can_filter_config_t f_config = CAN_FILTER_CONFIG_ACCEPT_ALL();
 
 /******************************************************************************/

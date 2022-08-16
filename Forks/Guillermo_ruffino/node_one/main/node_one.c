@@ -18,6 +18,25 @@
 #include "dunker.h"
 #include "Gyro.h"
 
+/*=============================================CANBUS COnfigs==================================================================*/
+static can_timing_config_t timingConfig = CAN_TIMING_CONFIG_1MBITS();     //Set Baudrate to 1Mbit
+                                                                          //CAN Filter configuration
+static can_filter_config_t filterConfig = CAN_FILTER_CONFIG_ACCEPT_ALL(); //Disable Message Filter
+                                                                          //CAN General configuration
+static can_general_config_t generalConfig = {.mode = TWAI_MODE_NORMAL,
+                                             .tx_io = 21,                  /*TX IO Pin (CO_config.h)*/
+                                             .rx_io = 22,                  /*RX IO Pin (CO_config.h)*/
+                                             .clkout_io = CAN_IO_UNUSED,          /*No clockout pin*/
+                                             .bus_off_io = CAN_IO_UNUSED,         /*No busoff pin*/
+                                             .tx_queue_len = CAN_TX_QUEUE_LENGTH, /*ESP TX Buffer Size (CO_config.h)*/
+                                             .rx_queue_len = CAN_RX_QUEUE_LENGTH, /*ESP RX Buffer Size (CO_config.h)*/
+                                             .alerts_enabled = CAN_ALERT_NONE,    /*Disable CAN Alarms TODO: Enable for CO_CANverifyErrors*/
+                                             .clkout_divider = 0};  
+/*=====================================================================================================================================*/
+
+//Timer Handle
+esp_timer_handle_t CO_CANinterruptPeriodicTimer;
+
 uint8_t counter = 0;
 
 volatile uint32_t coInterruptCounter = 0U; /* variable increments each millisecond */
@@ -31,6 +50,7 @@ esp_timer_handle_t periodicTimer;
 
 void mainTask(void *pvParameter)
 {
+		ESP_LOGE("mainTask", "Starting Application");
 		coMainTaskArgs.callback = &coMainTask;
 		coMainTaskArgs.name = "coMainTask";
 		CO_NMT_reset_cmd_t reset = CO_RESET_NOT;
@@ -55,27 +75,30 @@ void mainTask(void *pvParameter)
 
 				/* start CAN */
 				CO_CANsetNormalMode(CO->CANmodule[0]);
-
+				ESP_LOGE("mainTask", "CAN bus started");
+    /*WORKAROUND: INTERRUPT ALLOCATION FÜR CAN NICHT MÖGLICH DA BEREITS IM IDF TREIBER VERWENDET*/
+    /* Configure Timer interrupt function for execution every CO_CAN_PSEUDO_INTERRUPT_INTERVAL */
+    /*Set Canmodule to normal mode*/
+    			CO->CANmodule[0]->CANnormal = true;
 				reset = CO_RESET_NOT;
 				coInterruptCounterPrevious = coInterruptCounter;
 
 				/*Set Operating Mode of Slaves to Operational*/
 				CO_sendNMTcommand(CO, 0x01, NODE_ID_MOTOR0);
-				//CO_sendNMTcommand(CO, 0x01, NODE_ID_MOTOR1);
-				//CO_sendNMTcommand(CO, 0x01, NODE_ID_GYRO);
+				ESP_LOGE("mainTask", "NMT sent");
+				// CO_sendNMTcommand(CO, 0x01, NODE_ID_MOTOR1);
+				// CO_sendNMTcommand(CO, 0x01, NODE_ID_GYRO);
 				//CO_sendNMTcommand(CO, 0x01, NODE_ID_HATOX);
 
 				/* Initialise system components */
 				dunker_init(CO, NODE_ID_MOTOR0, 2);
+				ESP_LOGE("mainTask", "Dunker init");
 				// gyro_init(CO);
 
 				/* application init code goes here. */
 				//rosserialSetup();
 
-				while (reset == CO_RESET_NOT)
-				{
-						/* loop for normal program execution ******************************************/
-						uint32_t coInterruptCounterCopy;
+				uint32_t coInterruptCounterCopy;
 						uint32_t coInterruptCounterDiff;
 						coInterruptCounterCopy = coInterruptCounter;
 						coInterruptCounterDiff = coInterruptCounterCopy - coInterruptCounterPrevious;
@@ -83,44 +106,105 @@ void mainTask(void *pvParameter)
 
 						/* CANopen process */
 						reset = CO_process(CO, coInterruptCounterDiff, NULL);
+						ESP_LOGE("mainTask", "CO_Process init");
 
-						/* Nonblocking application code may go here. */
-						if (counter == 0)
-						{
-								dunker_setEnable(1);
-								dunker_setSpeed(1000);
-								counter++;
-						}
-						if (coInterruptCounter > 4000 && counter == 1)
-						{
-								dunker_setSpeed(3000);
-								counter++;
-						}
-						if (coInterruptCounter > 8000 && counter == 2)
-						{
-								dunker_quickStop();
-								counter++;
-						}
-						if (coInterruptCounter > 12000 && counter == 3)
-						{
-								dunker_continueMovement();
-								dunker_setSpeed(1000);
-								counter++;
-						}
-						if (coInterruptCounter > 16000 && counter == 4)
-						{
-								dunker_halt();
-								dunker_setEnable(0);
-								counter++;
-						}
+						uint8_t sdo_rx_data_buffer[13] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+						// const twai_message_t msg_buffer = {.identifier = 0x61A, .data_length_code = 8, .data = {0x2F, 0x10,  0x08, 0x00, 0x00, 0x00, 0x00, 0x00} };
+
+
+				while (reset == CO_RESET_NOT)
+				{
+						ESP_LOGE("maintask", "beggining of a While");
+						CO_SDOclientUploadInitiate(CO->SDOclient[0], 0x1318, 0x0A, sdo_rx_data_buffer, 13, 0);
+								dunker_coProcessUploadSDO();
+								ESP_LOGE("mainTask", "Slave device name: %d %d %d %d %d %d %d %d %d %d %d %d %d", sdo_rx_data_buffer[0],
+																													sdo_rx_data_buffer[1],
+																													sdo_rx_data_buffer[2],
+																													sdo_rx_data_buffer[3],
+																													sdo_rx_data_buffer[4],
+																													sdo_rx_data_buffer[5],
+																													sdo_rx_data_buffer[6],
+																													sdo_rx_data_buffer[7],
+																													sdo_rx_data_buffer[8],
+																													sdo_rx_data_buffer[9],
+																													sdo_rx_data_buffer[10],
+																													sdo_rx_data_buffer[11],
+																													sdo_rx_data_buffer[12]);
+																													
+						/* loop for normal program execution ******************************************/
+						
+						// /* Nonblocking application code may go here. */
+						// if (counter == 0)
+						// {		
+						// 		ESP_LOGE("mainTask", "GET salve dev name: ");
+
+						// 		// twai_transmit(&msg_buffer, 1000);
+
+
+						// 		CO_SDOclientUploadInitiate(CO->SDOclient[0], 0x1008, 0, sdo_rx_data_buffer, 13, 0);
+						// 		dunker_coProcessUploadSDO();
+						// 		ESP_LOGE("mainTask", "Slave device name: %d %d %d %d %d %d %d %d %d %d %d %d %d", sdo_rx_data_buffer[0],
+						// 																							sdo_rx_data_buffer[1],
+						// 																							sdo_rx_data_buffer[2],
+						// 																							sdo_rx_data_buffer[3],
+						// 																							sdo_rx_data_buffer[4],
+						// 																							sdo_rx_data_buffer[5],
+						// 																							sdo_rx_data_buffer[6],
+						// 																							sdo_rx_data_buffer[7],
+						// 																							sdo_rx_data_buffer[8],
+						// 																							sdo_rx_data_buffer[9],
+						// 																							sdo_rx_data_buffer[10],
+						// 																							sdo_rx_data_buffer[11],
+						// 																							sdo_rx_data_buffer[12]);
+																													
+						// 		// ESP_LOGE("mainTask", "Dunker_setEnable begin");
+						// 		// dunker_setEnable(1);
+						// 		// ESP_LOGE("mainTask", "Dunker_setSpeed 1000");
+						// 		// dunker_setSpeed(1000);
+						// 		ESP_LOGE("mainTask", "Counter 0++");
+						// 		counter++;
+						// }
+						// if (coInterruptCounter > 4000 && counter == 1)
+						// {
+						// 		// ESP_LOGE("mainTask", "Dunker_setSpeed 3000");
+						// 		// dunker_setSpeed(3000);
+						// 		ESP_LOGE("mainTask", "Counter = 1 ++");
+						// 		counter++;
+						// }
+						// if (coInterruptCounter > 8000 && counter == 2)
+						// {		
+						// 		// ESP_LOGE("mainTask", "Dunker_quickstop");
+						// 		// dunker_quickStop();
+						// 		ESP_LOGE("mainTask", "Counter = 2 ++");
+						// 		counter++;
+						// }
+						// if (coInterruptCounter > 12000 && counter == 3)
+						// {		
+						// 		// ESP_LOGE("mainTask", "Dunker_continueMovement");
+						// 		// dunker_continueMovement();
+						// 		// ESP_LOGE("mainTask", "Dunker_setSpeed 1000");
+						// 		// dunker_setSpeed(1000);
+						// 		ESP_LOGE("mainTask", "Counter = 3 ++");
+						// 		counter = 0;
+						// }
+						// if (coInterruptCounter > 16000 && counter == 4)
+						// {		
+						// 		// ESP_LOGE("mainTask", "Dunker_halt");
+						// 		// dunker_halt();
+						// 		// ESP_LOGE("mainTask", "Dunker_setEnable");
+						// 		// dunker_setEnable(0);
+						// 		ESP_LOGE("mainTask", "Counter = 4 ++");
+						// 		counter++;
+						// }
 
 						/* Wait */
-						vTaskDelay(MAIN_WAIT / portTICK_PERIOD_MS);
+						vTaskDelay(pdMS_TO_TICKS(1000));
 				}
 		}
 		/* program exit
 		 * ***************************************************************/
 		/* reset */
+		ESP_LOGE("mainTask", "MCU restart");
 		esp_restart();
 }
 

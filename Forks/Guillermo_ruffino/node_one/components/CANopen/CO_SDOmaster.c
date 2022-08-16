@@ -299,7 +299,7 @@ static void CO_SDOclient_abort(CO_SDOclient_t *SDO_C, uint32_t code){
     SDO_C->CANtxBuff->data[2] = (SDO_C->index>>8) & 0xFF;
     SDO_C->CANtxBuff->data[3] = SDO_C->subIndex;
     CO_memcpySwap4(&SDO_C->CANtxBuff->data[4], &code);
-    CO_CANsend(SDO_C->CANdevTx, SDO_C->CANtxBuff);
+    CO_CANsend(SDO_C->CANdevTx, SDO_C->CANtxBuff, 600);
     SDO_C->state = SDO_STATE_NOTDEFINED;
     CLEAR_CANrxNew(SDO_C->CANrxNew);
 }
@@ -398,7 +398,7 @@ CO_SDOclient_return_t CO_SDOclientDownloadInitiate(
     /* empty receive buffer, reset timeout timer and send message */
     CLEAR_CANrxNew(SDO_C->CANrxNew);
     SDO_C->timeoutTimer = 0;
-    CO_CANsend(SDO_C->CANdevTx, SDO_C->CANtxBuff);
+    CO_CANsend(SDO_C->CANdevTx, SDO_C->CANtxBuff, 700);
 
     return CO_SDOcli_ok_communicationEnd;
 }
@@ -656,7 +656,7 @@ CO_SDOclient_return_t CO_SDOclientDownload(
                 SDO_C->CANtxBuff->data[0] |= 1;
             }
             /* Send next SDO message */
-            CO_CANsend(SDO_C->CANdevTx, SDO_C->CANtxBuff);
+            CO_CANsend(SDO_C->CANdevTx, SDO_C->CANtxBuff, 710);
             SDO_C->state = SDO_STATE_DOWNLOAD_RESPONSE;
             break;
         }
@@ -693,7 +693,7 @@ CO_SDOclient_return_t CO_SDOclientDownload(
 
             /*  tx data */
             SDO_C->timeoutTimer = 0;
-            CO_CANsend(SDO_C->CANdevTx, SDO_C->CANtxBuff);
+            CO_CANsend(SDO_C->CANdevTx, SDO_C->CANtxBuff, 720);
 
             break;
         }
@@ -712,7 +712,7 @@ CO_SDOclient_return_t CO_SDOclientDownload(
             SDO_C->state = SDO_STATE_BLOCKDOWNLOAD_CRC_ACK;
             /*  tx data */
             SDO_C->timeoutTimer = 0;
-            CO_CANsend(SDO_C->CANdevTx, SDO_C->CANtxBuff);
+            CO_CANsend(SDO_C->CANdevTx, SDO_C->CANtxBuff, 730);
 
             break;
         }
@@ -804,7 +804,7 @@ CO_SDOclient_return_t CO_SDOclientUploadInitiate(
     CLEAR_CANrxNew(SDO_C->CANrxNew);
     SDO_C->timeoutTimer = 0;
     SDO_C->timeoutTimerBLOCK =0;
-    CO_CANsend(SDO_C->CANdevTx, SDO_C->CANtxBuff);
+    CO_CANsend(SDO_C->CANdevTx, SDO_C->CANtxBuff, 800);
 
     return CO_SDOcli_ok_communicationEnd;
 }
@@ -1137,7 +1137,7 @@ CO_SDOclient_return_t CO_SDOclientUpload(
         /*  SEGMENTED UPLOAD */
         case SDO_STATE_UPLOAD_REQUEST:{
             SDO_C->CANtxBuff->data[0] = (CCS_UPLOAD_SEGMENT<<5) | (SDO_C->toggle & 0x10);
-            CO_CANsend(SDO_C->CANdevTx, SDO_C->CANtxBuff);
+            CO_CANsend(SDO_C->CANdevTx, SDO_C->CANtxBuff, 900);
 
             SDO_C->state = SDO_STATE_UPLOAD_RESPONSE;
             SDO_C->toggle = ~SDO_C->toggle;
@@ -1152,7 +1152,7 @@ CO_SDOclient_return_t CO_SDOclientUpload(
 
             /*  header */
             SDO_C->CANtxBuff->data[0] = (CCS_UPLOAD_BLOCK<<5) | 0x03;
-            CO_CANsend(SDO_C->CANdevTx, SDO_C->CANtxBuff);
+            CO_CANsend(SDO_C->CANdevTx, SDO_C->CANtxBuff, 910);
 
             break;
         }
@@ -1168,7 +1168,7 @@ CO_SDOclient_return_t CO_SDOclientUpload(
             SDO_C->state = SDO_STATE_BLOCKUPLOAD_BLOCK_CRC;
 
             SDO_C->CANtxBuff->data[2] = SDO_C->block_blksize;
-            CO_CANsend(SDO_C->CANdevTx, SDO_C->CANtxBuff);
+            CO_CANsend(SDO_C->CANdevTx, SDO_C->CANtxBuff, 920);
 
             break;
         }
@@ -1207,7 +1207,7 @@ CO_SDOclient_return_t CO_SDOclientUpload(
                 SDO_C->state = SDO_STATE_BLOCKUPLOAD_INPROGRES;
             }
             SDO_C->CANtxBuff->data[2] = SDO_C->block_blksize;
-            CO_CANsend(SDO_C->CANdevTx, SDO_C->CANtxBuff);
+            CO_CANsend(SDO_C->CANdevTx, SDO_C->CANtxBuff, 930);
 
             break;
         }
@@ -1215,7 +1215,7 @@ CO_SDOclient_return_t CO_SDOclientUpload(
         case SDO_STATE_BLOCKUPLOAD_BLOCK_END:{
             SDO_C->CANtxBuff->data[0] = (CCS_UPLOAD_BLOCK<<5) | 0x01;
 
-            CO_CANsend(SDO_C->CANdevTx, SDO_C->CANtxBuff);
+            CO_CANsend(SDO_C->CANdevTx, SDO_C->CANtxBuff, 940);
 
             *pDataSize = SDO_C->dataSizeTransfered;
 

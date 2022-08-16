@@ -142,7 +142,7 @@ uint8_t CO_TIME_process(
                 TIME->timer = 0;
                 ret = 1;
                 CO_memcpy(TIME->TXbuff->data, (const uint8_t*)&TIME->Time.ullValue, TIME_MSG_LENGTH);
-                CO_CANsend(TIME->CANdevTx, TIME->TXbuff);
+                CO_CANsend(TIME->CANdevTx, TIME->TXbuff,1100);
             }
         }
 

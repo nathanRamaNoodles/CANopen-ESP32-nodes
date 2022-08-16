@@ -244,7 +244,7 @@ CO_CANtx_t *CO_CANtxBufferInit(
  * @return #CO_ReturnError_t: CO_ERROR_NO, CO_ERROR_TX_OVERFLOW or
  * CO_ERROR_TX_PDO_WINDOW (Synchronous TPDO is outside window).
  */
-CO_ReturnError_t CO_CANsend(CO_CANmodule_t *CANmodule, CO_CANtx_t *buffer);
+CO_ReturnError_t CO_CANsend(CO_CANmodule_t *CANmodule, CO_CANtx_t *buffer, int cmd_flag);
 
 
 /**

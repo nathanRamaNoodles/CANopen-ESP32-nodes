@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-
+#include "esp_log.h"
 #include "CO_driver.h"
 #include "CO_SDO.h"
 #include "CO_Emergency.h"
@@ -314,7 +314,6 @@ uint8_t CO_SYNC_process(
             ret = 1;
             CLEAR_CANrxNew(SYNC->CANrxNew);
         }
-
         /* SYNC producer */
         if(SYNC->isProducer && SYNC->periodTime){
             if(SYNC->timer >= SYNC->periodTime){
@@ -323,7 +322,8 @@ uint8_t CO_SYNC_process(
                 ret = 1;
                 SYNC->CANrxToggle = SYNC->CANrxToggle ? false : true;
                 SYNC->CANtxBuff->data[0] = SYNC->counter;
-                CO_CANsend(SYNC->CANdevTx, SYNC->CANtxBuff);
+                ESP_LOGE("CO_Sync_Process", "sync send");
+                CO_CANsend(SYNC->CANdevTx, SYNC->CANtxBuff, 1000);
             }
         }
 
