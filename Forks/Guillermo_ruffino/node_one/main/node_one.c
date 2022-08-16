@@ -132,7 +132,7 @@ void mainTask(void *pvParameter)
 																													sdo_rx_data_buffer[12]);
 																													
 						/* loop for normal program execution ******************************************/
-						
+						int i = 5;
 						// /* Nonblocking application code may go here. */
 						// if (counter == 0)
 						// {		
