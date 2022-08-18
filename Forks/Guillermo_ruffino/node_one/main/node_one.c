@@ -109,12 +109,12 @@ void mainTask(void *pvParameter)
 						ESP_LOGE("mainTask", "CO_Process init");
 
 						uint8_t sdo_rx_data_buffer[13] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-						 const twai_message_t msg_buffer = {.identifier = 0x61A, .data_length_code = 8, .data = {0x4C, 0x09,  0x10, 0x00, 0x00, 0x00, 0x00, 0x00} };
+						// const twai_message_t msg_buffer = {.identifier = 0x61A, .data_length_code = 8, .data = {0x4C, 0x09,  0x10, 0x00, 0x00, 0x00, 0x00, 0x00} };
 					
 
 				while (reset == CO_RESET_NOT)
 				{
-						twai_transmit(&msg_buffer, 1000);
+						//twai_transmit(&msg_buffer, 1000);
 						ESP_LOGE("maintask", "beggining of a While");
 
 						/*download*/
@@ -122,7 +122,7 @@ void mainTask(void *pvParameter)
 						// dunker_coProcessDownloadSDO();
 						/* upload*/		
 						CO_SDOclientUploadInitiate(CO->SDOclient[0], 0x1008, 0, sdo_rx_data_buffer, 13, 0);
-						dunker_coProcessUploadSDO();
+						//dunker_coProcessUploadSDO();
 
 								ESP_LOGE("mainTask", "Slave device name: %d %d %d %d %d %d %d %d %d %d %d %d %d", sdo_rx_data_buffer[0],
 																													sdo_rx_data_buffer[1],
