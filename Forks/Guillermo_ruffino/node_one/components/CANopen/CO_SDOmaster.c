@@ -29,7 +29,7 @@
 #include "CO_SDO.h"
 #include "CO_SDOmaster.h"
 #include "crc16-ccitt.h"
-
+#include "esp_log.h"
 
 /* Client command specifier */
 #define CCS_DOWNLOAD_INITIATE           1
@@ -762,7 +762,7 @@ CO_SDOclient_return_t CO_SDOclientUploadInitiate(
     SDO_C->CANtxBuff->data[2] = index >> 8;
     SDO_C->CANtxBuff->data[3] = subIndex;
 
-
+    ESP_LOGE("CO_CANmodule_init", "blockenable: %d", blockEnable);
     if(blockEnable == 0){
         SDO_C->state = SDO_STATE_UPLOAD_INITIATED;
         SDO_C->CANtxBuff->data[0] = (CCS_UPLOAD_INITIATE<<5);

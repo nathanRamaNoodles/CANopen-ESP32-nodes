@@ -64,7 +64,7 @@ static can_timing_config_t timingConfig = CAN_TIMING_CONFIG_125KBITS();     //Se
                                                                           //CAN Filter configuration
 static can_filter_config_t filterConfig = CAN_FILTER_CONFIG_ACCEPT_ALL(); //Disable Message Filter
                                                                           //CAN General configuration
-static can_general_config_t generalConfig = {.mode = TWAI_MODE_NO_ACK,
+static can_general_config_t generalConfig = {.mode = TWAI_MODE_NORMAL,
                                              .tx_io = CAN_TX_IO,                  /*TX IO Pin (CO_config.h)*/
                                              .rx_io = CAN_RX_IO,                  /*RX IO Pin (CO_config.h)*/
                                              .clkout_io = CAN_IO_UNUSED,          /*No clockout pin*/
@@ -652,19 +652,24 @@ void CO_CANinterrupt(void *args)
             buffer->pFunct(buffer->object, &rcvMsg);
         }
     
-     ESP_LOGI("CANReceive", "ID: %d ID hex: %x, Data %d,%d,%d,%d,%d,%d   Data hex: %x,%x,%x,%x,%x,%x", temp_can_message.identifier,
-                                                                                                                    temp_can_message.identifier , 
+     ESP_LOGI("CANReceive", "ID: %d ID hex: %x, DLC: %d, Data %d,%d,%d,%d,%d,%d,%d,%d   Data hex: %x,%x,%x,%x,%x,%x,%x,%x", temp_can_message.identifier,
+                                                                                                                    temp_can_message.identifier,
+                                                                                                                    temp_can_message.data_length_code, 
                                                                                                                     temp_can_message.data[0], 
                                                                                                                     temp_can_message.data[1], 
                                                                                                                     temp_can_message.data[2], 
                                                                                                                     temp_can_message.data[3], 
                                                                                                                     temp_can_message.data[4], 
-                                                                                                                    temp_can_message.data[5], 
+                                                                                                                    temp_can_message.data[5],
+                                                                                                                    temp_can_message.data[6], 
+                                                                                                                    temp_can_message.data[7],  
                                                                                                                     temp_can_message.data[0], 
                                                                                                                     temp_can_message.data[1], 
                                                                                                                     temp_can_message.data[2], 
                                                                                                                     temp_can_message.data[3], 
                                                                                                                     temp_can_message.data[4], 
-                                                                                                                    temp_can_message.data[5]);
+                                                                                                                    temp_can_message.data[5],
+                                                                                                                    temp_can_message.data[6], 
+                                                                                                                    temp_can_message.data[7]);
     }
 }

@@ -83,34 +83,34 @@ void mainTask(void *pvParameter)
 						reset = CO_process(CO, coInterruptCounterDiff, NULL);
 
 						/* Nonblocking application code may go here. */
-						if (counter == 0)
-						{
-								// dunker_setEnable(1);
-								// dunker_setSpeed(1000);
-								counter++;
-						}
-						if (coInterruptCounter > 4000 && counter == 1)
-						{
-								// dunker_setSpeed(3000);
-								counter++;
-						}
-						if (coInterruptCounter > 8000 && counter == 2)
-						{
-								// dunker_quickStop();
-								counter++;
-						}
-						if (coInterruptCounter > 12000 && counter == 3)
-						{
-								// dunker_continueMovement();
-								// dunker_setSpeed(1000);
-								counter++;
-						}
-						if (coInterruptCounter > 16000 && counter == 4)
-						{
-								// dunker_halt();
-								// dunker_setEnable(0);
-								counter++;
-						}
+						// if (counter == 0)
+						// {
+						// 		// dunker_setEnable(1);
+						// 		// dunker_setSpeed(1000);
+						// 		counter++;
+						// }
+						// if (coInterruptCounter > 4000 && counter == 1)
+						// {
+						// 		// dunker_setSpeed(3000);
+						// 		counter++;
+						// }
+						// if (coInterruptCounter > 8000 && counter == 2)
+						// {
+						// 		// dunker_quickStop();
+						// 		counter++;
+						// }
+						// if (coInterruptCounter > 12000 && counter == 3)
+						// {
+						// 		// dunker_continueMovement();
+						// 		// dunker_setSpeed(1000);
+						// 		counter++;
+						// }
+						// if (coInterruptCounter > 16000 && counter == 4)
+						// {
+						// 		// dunker_halt();
+						// 		// dunker_setEnable(0);
+						// 		counter++;
+						// }
 
 						/* Wait */
 						vTaskDelay(MAIN_WAIT / portTICK_PERIOD_MS);

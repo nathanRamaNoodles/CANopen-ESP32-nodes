@@ -399,8 +399,26 @@ CO_ReturnError_t CO_CANsend(CO_CANmodule_t *CANmodule, CO_CANtx_t *buffer)
         /* Transmit esp can message.  */
         if (can_transmit(&temp_can_message, pdMS_TO_TICKS(CAN_TICKS_TO_WAIT)) == ESP_OK)
         {
-            ESP_LOGI("CANsend", "ID: %d , Data %d,%d,%d,%d,%d,%d", temp_can_message.identifier, temp_can_message.data[0], temp_can_message.data[1], temp_can_message.data[2], temp_can_message.data[3], temp_can_message.data[4], temp_can_message.data[5]);
-        }
+            ESP_LOGI("CANsend", "ID: %d ID hex: %x,DLC %d ,  Data %d,%d,%d,%d,%d,%d,%d,%d   Data hex: %x,%x,%x,%x,%x,%x,%x,%x", temp_can_message.identifier,
+                                                                                                                    temp_can_message.identifier,
+                                                                                                                    temp_can_message.data_length_code,
+                                                                                                                    temp_can_message.data[0], 
+                                                                                                                    temp_can_message.data[1], 
+                                                                                                                    temp_can_message.data[2], 
+                                                                                                                    temp_can_message.data[3], 
+                                                                                                                    temp_can_message.data[4], 
+                                                                                                                    temp_can_message.data[5],
+                                                                                                                    temp_can_message.data[6],
+                                                                                                                    temp_can_message.data[7], 
+                                                                                                                    temp_can_message.data[0], 
+                                                                                                                    temp_can_message.data[1], 
+                                                                                                                    temp_can_message.data[2], 
+                                                                                                                    temp_can_message.data[3], 
+                                                                                                                    temp_can_message.data[4], 
+                                                                                                                    temp_can_message.data[5],
+                                                                                                                    temp_can_message.data[6],
+                                                                                                                    temp_can_message.data[7]);
+  }
         else
         {
             err = CO_ERROR_TIMEOUT;
@@ -552,6 +570,24 @@ void CO_CANinterrupt(void *args)
     {
         can_message_t temp_can_message; //ESP data type can message
         ESP_ERROR_CHECK(can_receive(&temp_can_message, pdMS_TO_TICKS(CAN_TICKS_TO_WAIT)));
+        ESP_LOGI("CANReceive", "ID: %d ID hex: %x, Data %d,%d,%d,%d,%d,%d,%d,%d   Data hex: %x,%x,%x,%x,%x,%x,%x,%x", temp_can_message.identifier,
+                                                                                                                    temp_can_message.identifier , 
+                                                                                                                    temp_can_message.data[0], 
+                                                                                                                    temp_can_message.data[1], 
+                                                                                                                    temp_can_message.data[2], 
+                                                                                                                    temp_can_message.data[3], 
+                                                                                                                    temp_can_message.data[4], 
+                                                                                                                    temp_can_message.data[5],
+                                                                                                                    temp_can_message.data[6],
+                                                                                                                    temp_can_message.data[7], 
+                                                                                                                    temp_can_message.data[0], 
+                                                                                                                    temp_can_message.data[1], 
+                                                                                                                    temp_can_message.data[2], 
+                                                                                                                    temp_can_message.data[3], 
+                                                                                                                    temp_can_message.data[4], 
+                                                                                                                    temp_can_message.data[5],
+                                                                                                                    temp_can_message.data[6],
+                                                                                                                    temp_can_message.data[7]);
 
         CO_CANrxMsg_t rcvMsg;      /* pointer to received message in CAN module */
         uint16_t index;            /* index of received message */
