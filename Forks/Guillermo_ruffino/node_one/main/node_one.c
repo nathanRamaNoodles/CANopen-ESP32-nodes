@@ -105,26 +105,27 @@ void mainTask(void *pvParameter)
 						coInterruptCounterPrevious = coInterruptCounterCopy;
 
 						/* CANopen process */
-						reset = CO_process(CO, coInterruptCounterDiff, NULL);
-						ESP_LOGE("mainTask", "CO_Process init");
-
-						uint8_t sdo_rx_data_buffer[13] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-						// const twai_message_t msg_buffer = {.identifier = 0x61A, .data_length_code = 8, .data = {0x4C, 0x09,  0x10, 0x00, 0x00, 0x00, 0x00, 0x00} };
 					
 
+						uint8_t sdo_rx_data_buffer[13] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+						const twai_message_t msg_buffer = {.identifier = 0x61A, .data_length_code = 8, .data = {0x4C, 0x08,  0x10, 0x00, 0x00, 0x00, 0x00, 0x00} };
+					
+				int i = 0;
 				while (reset == CO_RESET_NOT)
 				{
-						//twai_transmit(&msg_buffer, 1000);
-						ESP_LOGE("maintask", "beggining of a While");
-
+						
 						/*download*/
 						// CO_SDOclientDownloadInitiate(CO->SDOclient[0], 0x1008, 0, sdo_rx_data_buffer, 13, 0);
 						// dunker_coProcessDownloadSDO();
-						/* upload*/		
+						/* upload*/	
+						
+						if ((i % 100) == 0) {
+						// twai_transmit(&msg_buffer, 1000);
+						// ESP_LOGE("maintask", "beggining of a While");
 						CO_SDOclientUploadInitiate(CO->SDOclient[0], 0x1008, 0, sdo_rx_data_buffer, 13, 0);
-						//dunker_coProcessUploadSDO();
+						dunker_coProcessUploadSDO();
 
-								ESP_LOGE("mainTask", "Slave device name: %d %d %d %d %d %d %d %d %d %d %d %d %d", sdo_rx_data_buffer[0],
+						ESP_LOGE("mainTask", "Slave device name: %d %d %d %d %d %d %d %d %d %d %d %d %d", sdo_rx_data_buffer[0],
 																													sdo_rx_data_buffer[1],
 																													sdo_rx_data_buffer[2],
 																													sdo_rx_data_buffer[3],
@@ -137,32 +138,15 @@ void mainTask(void *pvParameter)
 																													sdo_rx_data_buffer[10],
 																													sdo_rx_data_buffer[11],
 																													sdo_rx_data_buffer[12]);
-																													
+						 }	
+						i++;																						
 						/* loop for normal program execution ******************************************/
+						reset = CO_process(CO, coInterruptCounterDiff, NULL);
+						ESP_LOGE("mainTask", "CO_Process init");
 						// /* Nonblocking application code may go here. */
 						// if (counter == 0)
 						// {		
-						// 		ESP_LOGE("mainTask", "GET salve dev name: ");
-
-						// 		// twai_transmit(&msg_buffer, 1000);
-
-
-								// CO_SDOclientUploadInitiate(CO->SDOclient[0], 0x1008, 0, sdo_rx_data_buffer, 13, 0);
-								// dunker_coProcessUploadSDO();
-								// ESP_LOGE("mainTask", "Slave device name: %d %d %d %d %d %d %d %d %d %d %d %d %d", sdo_rx_data_buffer[0],
-								// 																					sdo_rx_data_buffer[1],
-								// 																					sdo_rx_data_buffer[2],
-								// 																					sdo_rx_data_buffer[3],
-								// 																					sdo_rx_data_buffer[4],
-								// 																					sdo_rx_data_buffer[5],
-								// 																					sdo_rx_data_buffer[6],
-								// 																					sdo_rx_data_buffer[7],
-								// 																					sdo_rx_data_buffer[8],
-								// 																					sdo_rx_data_buffer[9],
-								// 																					sdo_rx_data_buffer[10],
-								// 																					sdo_rx_data_buffer[11],
-								// 																					sdo_rx_data_buffer[12]);
-																													
+						// 		ESP_LOGE("mainTask", "GET salve dev name: ");																						
 						// 		// ESP_LOGE("mainTask", "Dunker_setEnable begin");
 						// 		// dunker_setEnable(1);
 						// 		// ESP_LOGE("mainTask", "Dunker_setSpeed 1000");
@@ -204,7 +188,8 @@ void mainTask(void *pvParameter)
 						// }
 
 						/* Wait */
-						vTaskDelay(pdMS_TO_TICKS(10000));
+
+						vTaskDelay(MAIN_WAIT / portTICK_PERIOD_MS);
 				}
 		}
 		/* program exit
