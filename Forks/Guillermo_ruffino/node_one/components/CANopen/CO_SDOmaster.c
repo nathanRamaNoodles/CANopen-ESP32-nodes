@@ -765,7 +765,7 @@ CO_SDOclient_return_t CO_SDOclientUploadInitiate(
     ESP_LOGE("CO_CANmodule_init", "blockenable: %d", blockEnable);
     if(blockEnable == 0){
         SDO_C->state = SDO_STATE_UPLOAD_INITIATED;
-        SDO_C->CANtxBuff->data[0] = (CCS_UPLOAD_INITIATE<<6); //<<5 buvo
+        SDO_C->CANtxBuff->data[0] = (CCS_UPLOAD_INITIATE<<5); //<<5 buvo
     }
     else{
         SDO_C->state = SDO_STATE_BLOCKUPLOAD_INITIATE;

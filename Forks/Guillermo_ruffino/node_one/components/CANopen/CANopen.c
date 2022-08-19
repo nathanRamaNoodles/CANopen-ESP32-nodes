@@ -876,7 +876,7 @@ CO_NMT_reset_cmd_t CO_process(
             timeDifference_ms * 10,
             OD_inhibitTimeEMCY,
             timerNext_ms);
-        ESP_LOGE("CO_process", "EM  process init");
+       // ESP_LOGE("CO_process", "EM  process init");
 
     reset = CO_NMT_process(
             co->NMT,
@@ -886,13 +886,13 @@ CO_NMT_reset_cmd_t CO_process(
             OD_errorRegister,
             OD_errorBehavior,
             timerNext_ms);
-ESP_LOGE("CO_process", "NMT  process init");
+//ESP_LOGE("CO_process", "NMT  process init");
 
     CO_HBconsumer_process(
             co->HBcons,
             NMTisPreOrOperational,
             timeDifference_ms);
-            ESP_LOGE("CO_process", "HB  process init");
+          //  ESP_LOGE("CO_process", "HB  process init");
 
 #if CO_NO_TIME == 1
     CO_TIME_process(

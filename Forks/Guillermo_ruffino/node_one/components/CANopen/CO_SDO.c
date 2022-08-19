@@ -173,6 +173,25 @@ static void CO_SDO_receive(void *object, const CO_CANrxMsg_t *msg){
     CO_SDO_t *SDO;
 
     SDO = (CO_SDO_t*)object;   /* this is the correct pointer type of the first argument */
+    ESP_LOGI("CAN_SDO_Receive", "gauta SDO zinute: ");
+    ESP_LOGI("CANReceive", "ID: %d ID hex: %x, Data %d,%d,%d,%d,%d,%d,%d,%d   Data hex: %x,%x,%x,%x,%x,%x,%x,%x", msg->ident,
+                                                                                                                    msg->ident , 
+                                                                                                                    msg->data[0], 
+                                                                                                                    msg->data[1], 
+                                                                                                                    msg->data[2], 
+                                                                                                                    msg->data[3], 
+                                                                                                                    msg->data[4], 
+                                                                                                                    msg->data[5],
+                                                                                                                    msg->data[6],
+                                                                                                                    msg->data[7], 
+                                                                                                                    msg->data[0], 
+                                                                                                                    msg->data[1], 
+                                                                                                                    msg->data[2], 
+                                                                                                                    msg->data[3], 
+                                                                                                                    msg->data[4], 
+                                                                                                                    msg->data[5],
+                                                                                                                    msg->data[6],
+                                                                                                                    msg->data[7]);
 
     /* WARNING: When doing a SDO block upload and immediately after that
      * starting another SDO request, this request is dropped. Especially if
@@ -180,8 +199,11 @@ static void CO_SDO_receive(void *object, const CO_CANrxMsg_t *msg){
      * See: https://github.com/CANopenNode/CANopenNode/issues/39 */
 
     /* verify message length and message overflow (previous message was not processed yet) */
+    ESP_LOGI("CAN_SDO_Receive", "DLC len %d", msg->DLC);
+    ESP_LOGI("CAN_SDO_Receive", "check if new mshg arrived %d", IS_CANrxNew(SDO->CANrxNew));
     if((msg->DLC == 8U) && (!IS_CANrxNew(SDO->CANrxNew))){
         if(SDO->state != CO_SDO_ST_DOWNLOAD_BL_SUBBLOCK) {
+             ESP_LOGI("CAN_SDO_Receive", "SDO state != CO_SDO_ST_DOWNLOAD_BL_SUBBLOCK");
             /* copy data and set 'new message' flag */
             SDO->CANrxData[0] = msg->data[0];
             SDO->CANrxData[1] = msg->data[1];
@@ -195,6 +217,7 @@ static void CO_SDO_receive(void *object, const CO_CANrxMsg_t *msg){
             SET_CANrxNew(SDO->CANrxNew);
         }
         else {
+            ESP_LOGI("CAN_SDO_Receive", "SDO state == CO_SDO_ST_DOWNLOAD_BL_SUBBLOCK");
             /* block download, copy data directly */
             uint8_t seqno;
 
@@ -214,6 +237,7 @@ static void CO_SDO_receive(void *object, const CO_CANrxMsg_t *msg){
                     SDO->ODF_arg.data[SDO->bufferOffset++] = msg->data[i]; //SDO->ODF_arg.data is equal as SDO->databuffer
                     if(SDO->bufferOffset >= CO_SDO_BUFFER_SIZE) {
                         /* buffer full, break reception */
+                        ESP_LOGI("CAN_SDO_Receive", "buffer full, breaking reception ");
                         SDO->state = CO_SDO_ST_DOWNLOAD_BL_SUB_RESP;
                         SET_CANrxNew(SDO->CANrxNew);
                         break;
@@ -222,6 +246,7 @@ static void CO_SDO_receive(void *object, const CO_CANrxMsg_t *msg){
 
                 /* break reception if last segment or block sequence is too large */
                 if(((SDO->CANrxData[0] & 0x80U) == 0x80U) || (SDO->sequence >= SDO->blksize)) {
+                    ESP_LOGI("CAN_SDO_Receive", "Break reception if last segment or block is too large ");
                     SDO->state = CO_SDO_ST_DOWNLOAD_BL_SUB_RESP;
                     SET_CANrxNew(SDO->CANrxNew);
                 }
@@ -238,6 +263,7 @@ static void CO_SDO_receive(void *object, const CO_CANrxMsg_t *msg){
 
         /* Optional signal to RTOS, which can resume task, which handles SDO server. */
         if(IS_CANrxNew(SDO->CANrxNew) && SDO->pFunctSignal != NULL) {
+            ESP_LOGI("CAN_SDO_Receive", "SDO->pFunctsignal proceed");
             SDO->pFunctSignal();
         }
     }
@@ -575,13 +601,14 @@ uint8_t* CO_OD_getFlagsPointer(CO_SDO_t *SDO, uint16_t entryNo, uint8_t subIndex
 
 /******************************************************************************/
 uint32_t CO_SDO_initTransfer(CO_SDO_t *SDO, uint16_t index, uint8_t subIndex){
-
+     ESP_LOGE("SDO_initTransfer", "Received object dictionary id : %x and sub id :%x", index, subIndex);
     SDO->ODF_arg.index = index;
     SDO->ODF_arg.subIndex = subIndex;
 
     /* find object in Object Dictionary */
     SDO->entryNo = CO_OD_find(SDO, index);
     if(SDO->entryNo == 0xFFFFU){
+         ESP_LOGE("SDO_Process", "Object does not exist");
         return CO_SDO_AB_NOT_EXIST ;     /* object does not exist in OD */
     }
 
@@ -605,6 +632,9 @@ uint32_t CO_SDO_initTransfer(CO_SDO_t *SDO, uint16_t index, uint8_t subIndex){
     SDO->ODF_arg.dataLength = CO_OD_getLength(SDO, SDO->entryNo, subIndex);
     SDO->ODF_arg.attribute = CO_OD_getAttribute(SDO, SDO->entryNo, subIndex);
     SDO->ODF_arg.pFlags = CO_OD_getFlagsPointer(SDO, SDO->entryNo, subIndex);
+
+    ESP_LOGE("SDO_Process", "OD data length: %d", SDO->ODF_arg.dataLength);
+    ESP_LOGE("SDO_Process", "OD attribute: %d", SDO->ODF_arg.attribute);
 
     SDO->ODF_arg.firstSegment = true;
     SDO->ODF_arg.lastSegment = true;
@@ -799,6 +829,7 @@ int8_t CO_SDO_process(
 
     /* SDO is allowed to work only in operational or pre-operational NMT state */
     if(!NMTisPreOrOperational){
+        ESP_LOGE("SDO_Process", "SDO is not operational or pre-operational");
         SDO->state = CO_SDO_ST_IDLE;
         CLEAR_CANrxNew(SDO->CANrxNew);
         return 0;
@@ -806,6 +837,7 @@ int8_t CO_SDO_process(
 
     /* Is something new to process? */
     if((!SDO->CANtxBuff->bufferFull) && ((IS_CANrxNew(SDO->CANrxNew)) || (SDO->state == CO_SDO_ST_UPLOAD_BL_SUBBLOCK))){
+        ESP_LOGE("SDO_Process", "Something new to process");
         uint8_t CCS = SDO->CANrxData[0] >> 5;   /* Client command specifier */
 
         /* reset timeout */
@@ -818,6 +850,7 @@ int8_t CO_SDO_process(
 
         /* Is abort from client? */
         if((IS_CANrxNew(SDO->CANrxNew)) && (SDO->CANrxData[0] == CCS_ABORT)){
+            ESP_LOGE("SDO_Process", "Abort from client");
             SDO->state = CO_SDO_ST_IDLE;
             CLEAR_CANrxNew(SDO->CANrxNew);
             return -1;
@@ -825,35 +858,41 @@ int8_t CO_SDO_process(
 
         /* continue with previous SDO communication or start new */
         if(SDO->state != CO_SDO_ST_IDLE){
+            ESP_LOGE("SDO_Process", "Continuing previous SDO communication");
             state = SDO->state;
         }
         else{
+            ESP_LOGE("SDO_Process", "Starting new SDO communication");
             uint32_t abortCode;
             uint16_t index;
 
             /* Is client command specifier valid */
             if((CCS != CCS_DOWNLOAD_INITIATE) && (CCS != CCS_UPLOAD_INITIATE) &&
                 (CCS != CCS_DOWNLOAD_BLOCK) && (CCS != CCS_UPLOAD_BLOCK)){
+                ESP_LOGE("SDO_Process", "Command specifier unknown %d", CCS);
                 CO_SDO_abort(SDO, CO_SDO_AB_CMD);/* Client command specifier not valid or unknown. */
                 return -1;
             }
-
+             ESP_LOGE("SDO_Process", "Command specifier %d", CCS);
             /* init ODF_arg */
             index = SDO->CANrxData[2];
             index = index << 8 | SDO->CANrxData[1];
             abortCode = CO_SDO_initTransfer(SDO, index, SDO->CANrxData[3]);
             if(abortCode != 0U){
+                ESP_LOGE("SDO_Process", "SDO init transfer failed");
                 CO_SDO_abort(SDO, abortCode);
                 return -1;
             }
 
             /* download */
+            
+            ESP_LOGE("SDO_Process", "Command specifier %d", CCS);
             if((CCS == CCS_DOWNLOAD_INITIATE) || (CCS == CCS_DOWNLOAD_BLOCK)){
                 if((SDO->ODF_arg.attribute & CO_ODA_WRITEABLE) == 0U){
                     CO_SDO_abort(SDO, CO_SDO_AB_READONLY); /* attempt to write a read-only object */
                     return -1;
                 }
-
+                ESP_LOGE("SDO_Process", "Command specifier %d (if 1 download init if 6 download block)", CCS);
                 /* set state machine to normal or block download */
                 if(CCS == CCS_DOWNLOAD_INITIATE){
                     state = CO_SDO_ST_DOWNLOAD_INITIATE;
@@ -865,8 +904,10 @@ int8_t CO_SDO_process(
 
             /* upload */
             else{
+                ESP_LOGE("SDO_Process", "CO_SDO Upload init");
                 abortCode = CO_SDO_readOD(SDO, CO_SDO_BUFFER_SIZE);
                 if(abortCode != 0U){
+                    ESP_LOGE("SDO_Process", "failed to read object dictionary");
                     CO_SDO_abort(SDO, abortCode);
                     return -1;
                 }
@@ -877,6 +918,7 @@ int8_t CO_SDO_process(
                 }
                 else{
                     state = CO_SDO_ST_UPLOAD_INITIATE;
+                    ESP_LOGE("SDO_Process", "SDO upload initiate");
                 }
             }
         }
@@ -892,6 +934,7 @@ int8_t CO_SDO_process(
             state = CO_SDO_ST_DOWNLOAD_BL_SUB_RESP;
         }
         else{
+            ESP_LOGE("SDO_Process", "SDO protocol timed out");
             CO_SDO_abort(SDO, CO_SDO_AB_TIMEOUT); /* SDO protocol timed out */
             return -1;
         }
@@ -901,7 +944,7 @@ int8_t CO_SDO_process(
     if(state == CO_SDO_ST_IDLE){
         return 0;
     }
-
+    ESP_LOGE("SDO_Process", "SDO state %d", state);
     /* state machine (buffer is freed (CLEAR_CANrxNew()) at the end) */
     switch(state){
         uint32_t abortCode;
@@ -910,6 +953,7 @@ int8_t CO_SDO_process(
 
         case CO_SDO_ST_DOWNLOAD_INITIATE:{
             /* default response */
+            ESP_LOGE("SDO_Process", "Initiate download");
             SDO->CANtxBuff->data[0] = 0x60;
             SDO->CANtxBuff->data[1] = SDO->CANrxData[1];
             SDO->CANtxBuff->data[2] = SDO->CANrxData[2];
@@ -932,6 +976,7 @@ int8_t CO_SDO_process(
                 SDO->ODF_arg.data[3] = SDO->CANrxData[7];
 
                 /* write data to the Object dictionary */
+                ESP_LOGE("SDO_Process", "CO_SDO write to OD");
                 abortCode = CO_SDO_writeOD(SDO, len);
                 if(abortCode != 0U){
                     CO_SDO_abort(SDO, abortCode);
@@ -1170,7 +1215,7 @@ int8_t CO_SDO_process(
             SDO->CANtxBuff->data[1] = SDO->CANrxData[1];
             SDO->CANtxBuff->data[2] = SDO->CANrxData[2];
             SDO->CANtxBuff->data[3] = SDO->CANrxData[3];
-
+            ESP_LOGE("SDO_Process", "total data length %d and data length: %d", SDO->ODF_arg.dataLengthTotal, SDO->ODF_arg.dataLength);
             /* Expedited transfer */
             if(SDO->ODF_arg.dataLength <= 4U){
                 for(i=0U; i<SDO->ODF_arg.dataLength; i++)
@@ -1178,7 +1223,8 @@ int8_t CO_SDO_process(
 
                 SDO->CANtxBuff->data[0] = 0x43U | ((4U-SDO->ODF_arg.dataLength) << 2U);
                 SDO->state = CO_SDO_ST_IDLE;
-
+                
+                ESP_LOGE("SDO_Process", "SDO expedited state %d", state);
                 sendResponse = true;
             }
 
@@ -1199,11 +1245,12 @@ int8_t CO_SDO_process(
                 }
 
                 /* send response */
+                ESP_LOGE("SDO_Process", "SDO segmented state %d", state);
                 sendResponse = true;
             }
             break;
         }
-
+        ESP_LOGE("SDO_Process", "SDO state %d", state);
         case CO_SDO_ST_UPLOAD_SEGMENTED:{
             /* verify client command specifier */
             if((SDO->CANrxData[0]&0xE0U) != 0x60U){
@@ -1448,6 +1495,7 @@ int8_t CO_SDO_process(
             }
 
             /* send response */
+            ESP_LOGE("SDO_Process", "CO_SDO read OD");
             CO_CANsend(SDO->CANdevTx, SDO->CANtxBuff, 510);
 
             /* Set timerNext_ms to 0 to inform OS to call this function again without delay. */
@@ -1485,6 +1533,7 @@ int8_t CO_SDO_process(
     /* free buffer and send message */
     CLEAR_CANrxNew(SDO->CANrxNew);
     if(sendResponse) {
+        ESP_LOGE("SDO_Process", "Send response");
         CO_CANsend(SDO->CANdevTx, SDO->CANtxBuff, 520);
     }
 

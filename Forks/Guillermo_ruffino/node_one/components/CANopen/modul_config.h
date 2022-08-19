@@ -14,7 +14,7 @@
 
 //####  MAIN CONFIG  ####
 #define BOOT_WAIT 2000
-#define MAIN_WAIT 1000 /** Time in ms between every main loop cycle */
+#define MAIN_WAIT 100 /** Time in ms between every main loop cycle */
 
 //----------------------------------
 
