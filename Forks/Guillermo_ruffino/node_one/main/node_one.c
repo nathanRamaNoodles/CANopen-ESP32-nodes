@@ -108,7 +108,7 @@ void mainTask(void *pvParameter)
 					
 
 						uint8_t sdo_rx_data_buffer[13] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-						const twai_message_t msg_buffer = {.identifier = 0x61A, .data_length_code = 8, .data = {0x4C, 0x08,  0x10, 0x00, 0x00, 0x00, 0x00, 0x00} };
+					//	const twai_message_t msg_buffer = {.identifier = 0x61A, .data_length_code = 8, .data = {0x4C, 0x08,  0x10, 0x00, 0x00, 0x00, 0x00, 0x00} };
 					
 				int i = 0;
 				while (reset == CO_RESET_NOT)
@@ -123,9 +123,10 @@ void mainTask(void *pvParameter)
 						// twai_transmit(&msg_buffer, 1000);
 						// ESP_LOGE("maintask", "beggining of a While");
 						CO_SDOclientUploadInitiate(CO->SDOclient[0], 0x1008, 0, sdo_rx_data_buffer, 13, 0);
-						dunker_coProcessUploadSDO();
+						int j = dunker_coProcessUploadSDO();
 
-						ESP_LOGE("mainTask", "Slave device name: %d %d %d %d %d %d %d %d %d %d %d %d %d", sdo_rx_data_buffer[0],
+						ESP_LOGE("mainTask", "Slave device name: %x %x %x %x %x %x %x %x %x %x %x %x %x ASCI: %c %c %c %c %c %c %c %c %c %c %c %c %c\n\r Error:  %d", 
+																													sdo_rx_data_buffer[0],
 																													sdo_rx_data_buffer[1],
 																													sdo_rx_data_buffer[2],
 																													sdo_rx_data_buffer[3],
@@ -137,12 +138,26 @@ void mainTask(void *pvParameter)
 																													sdo_rx_data_buffer[9],
 																													sdo_rx_data_buffer[10],
 																													sdo_rx_data_buffer[11],
-																													sdo_rx_data_buffer[12]);
+																													sdo_rx_data_buffer[12],
+																													sdo_rx_data_buffer[0],
+																													sdo_rx_data_buffer[1],
+																													sdo_rx_data_buffer[2],
+																													sdo_rx_data_buffer[3],
+																													sdo_rx_data_buffer[4],
+																													sdo_rx_data_buffer[5],
+																													sdo_rx_data_buffer[6],
+																													sdo_rx_data_buffer[7],
+																													sdo_rx_data_buffer[8],
+																													sdo_rx_data_buffer[9],
+																													sdo_rx_data_buffer[10],
+																													sdo_rx_data_buffer[11],
+																													sdo_rx_data_buffer[12],
+																													j);
 						 }	
 						i++;																						
 						/* loop for normal program execution ******************************************/
 						reset = CO_process(CO, coInterruptCounterDiff, NULL);
-						ESP_LOGE("mainTask", "CO_Process init");
+						//ESP_LOGE("mainTask", "CO_Process init");
 						// /* Nonblocking application code may go here. */
 						// if (counter == 0)
 						// {		
