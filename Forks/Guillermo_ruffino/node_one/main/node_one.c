@@ -118,7 +118,7 @@ void mainTask(void *pvParameter)
 						// CO_SDOclientDownloadInitiate(CO->SDOclient[0], 0x1008, 0, sdo_rx_data_buffer, 13, 0);
 						// dunker_coProcessDownloadSDO();
 						/* upload*/	
-						
+						// request every 10 s
 						if ((i % 100) == 0) {
 						// twai_transmit(&msg_buffer, 1000);
 						// ESP_LOGE("maintask", "beggining of a While");
