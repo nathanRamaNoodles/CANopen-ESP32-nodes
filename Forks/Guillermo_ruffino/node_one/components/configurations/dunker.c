@@ -143,10 +143,12 @@ int8_t dunker_coProcessUploadSDO(void)
 		uint32_t SdoAbortCode = CO_SDO_AB_NONE;
 		int8_t ret = 0;
 		uint32_t dataSize = 0;
-
+		uint16_t delay = 1;
+		
 		do
 		{
 				ret = CO_SDOclientUpload(_CO->SDOclient[0], 1, 5000, &dataSize, &SdoAbortCode);
+				vTaskDelay((delay / portTICK_PERIOD_MS) < 1? 1:(10 / portTICK_PERIOD_MS)); //tikus verciam i mili sekundes ir darom  delay 1 milisekundes.
 
 		} while (ret > 0);
 		return ret;
