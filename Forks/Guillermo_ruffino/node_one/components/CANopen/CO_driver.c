@@ -670,6 +670,6 @@ void CO_CANinterrupt(void *args)
                                                                                                                     temp_can_message.data[4], 
                                                                                                                     temp_can_message.data[5],
                                                                                                                     temp_can_message.data[6], 
-                                                                                                                    temp_can_message.data[7]);
+                                                                                                                    temp_can_message.data[7] & 0xFF);
     }
 }
