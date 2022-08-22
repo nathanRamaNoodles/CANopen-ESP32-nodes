@@ -350,6 +350,7 @@ CO_SDOclient_return_t CO_SDOclientDownloadInitiate(
     SDO_C->CANtxBuff->data[2] = index >> 8;
     SDO_C->CANtxBuff->data[3] = subIndex;
 
+    ESP_LOGE("mainTask", "data size: %d", SDO_C->bufferSize); 
     /* if nodeIDOfTheSDOServer == node-ID of this node, then exchange data with this node */
     if(SDO_C->SDOClientPar->nodeIDOfTheSDOServer == SDO_C->SDO->nodeId){
 
@@ -398,6 +399,7 @@ CO_SDOclient_return_t CO_SDOclientDownloadInitiate(
     /* empty receive buffer, reset timeout timer and send message */
     CLEAR_CANrxNew(SDO_C->CANrxNew);
     SDO_C->timeoutTimer = 0;
+    ESP_LOGE("download_init", "tx buffer: %x %x %x %x %x %x %x %x", SDO_C->CANtxBuff->data[0], SDO_C->CANtxBuff->data[1], SDO_C->CANtxBuff->data[2], SDO_C->CANtxBuff->data[3], SDO_C->CANtxBuff->data[4], SDO_C->CANtxBuff->data[5], SDO_C->CANtxBuff->data[6], SDO_C->CANtxBuff->data[7]); 
     CO_CANsend(SDO_C->CANdevTx, SDO_C->CANtxBuff, 700);
 
     return CO_SDOcli_ok_communicationEnd;
