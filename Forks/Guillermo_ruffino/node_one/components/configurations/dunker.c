@@ -158,9 +158,11 @@ int8_t dunker_coProcessDownloadSDO(void)
 {
 		uint32_t SdoAbortCode = CO_SDO_AB_NONE;
 		int8_t ret = 0;
+		uint16_t delay = 1;
 		do
 		{
 				ret = CO_SDOclientDownload(_CO->SDOclient[0], 1, 5000, &SdoAbortCode);
+				vTaskDelay((delay / portTICK_PERIOD_MS) < 1? 1:(10 / portTICK_PERIOD_MS)); //tikus verciam i mili sekundes ir darom  delay 1 milisekundes.
 		} while (ret > 0);
 		return ret;
 }
