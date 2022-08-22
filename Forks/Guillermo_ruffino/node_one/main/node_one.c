@@ -107,7 +107,7 @@ void mainTask(void *pvParameter)
 						/* CANopen process */
 					
 
-						uint32_t sdo_rx_data_buffer[13] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+						uint8_t sdo_rx_data_buffer[13] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 						uint8_t sdo_tx_data_buffer[4] = {0xAA, 0xBB, 0xCC, 0xDD};
 					//	const twai_message_t msg_buffer = {.identifier = 0x61A, .data_length_code = 8, .data = {0x4C, 0x08,  0x10, 0x00, 0x00, 0x00, 0x00, 0x00} };
 					
