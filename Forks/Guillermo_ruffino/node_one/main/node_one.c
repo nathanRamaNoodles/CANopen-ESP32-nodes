@@ -106,14 +106,17 @@ void mainTask(void *pvParameter)
 
 						/* CANopen process */
 					
-
-						uint8_t sdo_rx_data_buffer[13] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+						uint16_t len = 0;
+						len =  CO_OD_Entry_Length(CO->SDO[0], 0x1008, 0x00);
+						ESP_LOGE("maintask", "1008 OD Length: %d", len);
+						uint8_t sdo_rx_data_buffer[len];
 						uint8_t sdo_tx_data_buffer[4] = {0xAA, 0xBB, 0xCC, 0xDD};
 						uint8_t sdo_tx_data_byte = 1;
 						uint8_t sdo_tx_data_byte_2 = 0;
 					//	const twai_message_t msg_buffer = {.identifier = 0x61A, .data_length_code = 8, .data = {0x4C, 0x08,  0x10, 0x00, 0x00, 0x00, 0x00, 0x00} };
 					
 				int i = 0;
+				int k = 0;
 				while (reset == CO_RESET_NOT)
 				{
 						
@@ -122,38 +125,41 @@ void mainTask(void *pvParameter)
 						// dunker_coProcessDownloadSDO();
 						/* upload*/	
 						// request every 10 s
-						// if ((i % 100) == 0) {
+						if ((k % 100) == 0) {
 						// twai_transmit(&msg_buffer, 1000);
-						// ESP_LOGE("maintask", "beggining of a While");
-						// CO_SDOclientUploadInitiate(CO->SDOclient[0], 0x1008, 0, sdo_rx_data_buffer, 13, 0);
-						// int j = dunker_coProcessUploadSDO();
+							ESP_LOGE("maintask", "beggining of a While");
+							CO_SDOclientUploadInitiate(CO->SDOclient[0], 0x1008, 0, sdo_rx_data_buffer, len, 0);
+							int j = dunker_coProcessUploadSDO();
 
-						// ESP_LOGE("mainTask", "Slave device name: %c %c %c %c %c %c %c %c %c %c %c %c %c\n\r Error:  %d", 
-						// 																							sdo_rx_data_buffer[0],
-						// 																							sdo_rx_data_buffer[1],
-						// 																							sdo_rx_data_buffer[2],
-						// 																							sdo_rx_data_buffer[3],
-						// 																							sdo_rx_data_buffer[4],
-						// 																							sdo_rx_data_buffer[5],
-						// 																							sdo_rx_data_buffer[6],
-						// 																							sdo_rx_data_buffer[7],
-						// 																							sdo_rx_data_buffer[8],
-						// 																							sdo_rx_data_buffer[9],
-						// 																							sdo_rx_data_buffer[10],
-						// 																							sdo_rx_data_buffer[11],
-						// 																							sdo_rx_data_buffer[12],
-						//																												j);
-						if ( i == 10) {
-							CO_SDOclientDownloadInitiate(CO->SDOclient[0], 0x6304,  0x00, &sdo_tx_data_byte, 1, 0);
-							dunker_coProcessDownloadSDO(); 
-							ESP_LOGE("mainTask", "data was downlaoded to server"); 
-						} else if (i == 20) {
-							CO_SDOclientDownloadInitiate(CO->SDOclient[0], 0x6304,  0x00, &sdo_tx_data_byte_2, 1, 0);
-							dunker_coProcessDownloadSDO(); 
-							ESP_LOGE("mainTask", "data was downlaoded to server");
-							i = 0; 
-						}																				
-						i++;	
+							ESP_LOGE("mainTask", "Slave device name: %c \n\r Error:  %d", 
+																													sdo_rx_data_buffer[len],
+																													// sdo_rx_data_buffer[1],
+																													// sdo_rx_data_buffer[2],
+																													// sdo_rx_data_buffer[3],
+																													// sdo_rx_data_buffer[4],
+																													// sdo_rx_data_buffer[5],
+																													// sdo_rx_data_buffer[6],
+																													// sdo_rx_data_buffer[7],
+																													// sdo_rx_data_buffer[8],
+																													// sdo_rx_data_buffer[9],
+																													// sdo_rx_data_buffer[10],
+																													// sdo_rx_data_buffer[11],
+																													// sdo_rx_data_buffer[12],
+																													j);
+						k = 0;
+						}
+						// if ( i == 10) {
+						// 	CO_SDOclientDownloadInitiate(CO->SDOclient[0], 0x6304,  0x00, &sdo_tx_data_byte, 1, 0);
+						// 	dunker_coProcessDownloadSDO(); 
+						// 	ESP_LOGE("mainTask", "data was downlaoded to server"); 
+						// } else if (i == 20) {
+						// 	CO_SDOclientDownloadInitiate(CO->SDOclient[0], 0x6304,  0x00, &sdo_tx_data_byte_2, 1, 0);
+						// 	dunker_coProcessDownloadSDO(); 
+						// 	ESP_LOGE("mainTask", "data was downlaoded to server");
+						// 	i = 0; 
+						// }																				
+						i++;
+						k++;	
 
 							// if ((i % 150) == 0) {
 							// 	CO_SDOclientUploadInitiate(CO->SDOclient[0], 0x6305, 0x00, sdo_rx_data_buffer, 13, 0);

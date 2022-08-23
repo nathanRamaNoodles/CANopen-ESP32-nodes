@@ -950,6 +950,21 @@ uint32_t CO_SDO_readOD(CO_SDO_t *SDO, uint16_t SDOBufferSize);
  */
 uint32_t CO_SDO_writeOD(CO_SDO_t *SDO, uint16_t length);
 
+
+/**
+ * Get the length of required OD entry. 
+ *
+ * ODF_arg s must be initialized before with CO_SDO_initTransfer().
+ * @ref CO_SDO_OD_function is called if configured.
+ *
+ * @param SDO This object.
+ * @param index index of required OD length.
+ * @param subindex subindex of required OD length.
+ * @return length of OD entry.
+ */
+uint16_t CO_OD_Entry_Length(CO_SDO_t *SDO, uint16_t index, uint8_t subindex);
+
+
 #ifdef __cplusplus
 }
 #endif /*__cplusplus*/

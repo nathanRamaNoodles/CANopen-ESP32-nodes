@@ -447,17 +447,24 @@ uint16_t CO_OD_find(CO_SDO_t *SDO, uint16_t index){
     /* If Object Dictionary has up to 2^N entries, then N is max number of loop passes. */
     uint16_t cur, min, max;
     const CO_OD_entry_t* object;
-
+    cur = 0;
     min = 0U;
-    max = SDO->ODSize - 1U;
+    //max = SDO->ODSize - 1U;
+    max = 56;
+    // ESP_LOGE("SDO_initTransfer", "max size %d min  size %d", max, min);
     while(min < max){
+        // ESP_LOGE("SDO_initTransfer", "while loop");
         cur = (min + max) / 2;
+        //  ESP_LOGE("SDO_initTransfer", "cur val %d", cur);
         object = &SDO->OD[cur];
         /* Is object matched */
         if(index == object->index){
+            // ESP_LOGE("SDO_initTransfer", "object matched %d", cur);
             return cur;
         }
+        // ESP_LOGE("SDO_initTransfer", "object index %d", object->index);
         if(index < object->index){
+            // ESP_LOGE("SDO_initTransfer", "index , object->index %d", max);
             max = cur;
             if(max) max--;
         }
@@ -466,6 +473,7 @@ uint16_t CO_OD_find(CO_SDO_t *SDO, uint16_t index){
     }
 
     if(min == max){
+        // ESP_LOGE("SDO_initTransfer", "min == max %d", max);
         object = &SDO->OD[min];
         /* Is object matched */
         if(index == object->index){
@@ -1542,4 +1550,21 @@ int8_t CO_SDO_process(
     }
 
     return 0;
+}
+
+uint16_t CO_OD_Entry_Length(CO_SDO_t *SDO, uint16_t index, uint8_t subindex) {
+    uint16_t length = 0;
+    ESP_LOGE("SDO_Process", "Object id %d and subid %d", index,  subindex);
+    SDO->entryNo = CO_OD_find(SDO, index);
+    if(SDO->entryNo == 0xFFFFU){
+        ESP_LOGE("SDO_Process", "Object does not exist");
+        return 0;     /* object does not exist in OD */
+    }
+    if(subindex > SDO->OD[SDO->entryNo].maxSubIndex &&
+            SDO->OD[SDO->entryNo].pData != NULL)
+    {
+        return 0;     /* Sub-index does not exist. */
+    }
+    length = CO_OD_getLength(SDO, SDO->entryNo, subindex);
+    return length;
 }
