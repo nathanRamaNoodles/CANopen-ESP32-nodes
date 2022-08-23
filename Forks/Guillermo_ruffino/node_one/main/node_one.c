@@ -110,11 +110,26 @@ void mainTask(void *pvParameter)
 						len =  CO_OD_Entry_Length(CO->SDO[0], 0x1008, 0x00);
 						ESP_LOGE("maintask", "1008 OD Length: %d", len);
 						uint8_t sdo_rx_data_buffer[len];
+						memset(sdo_rx_data_buffer, 0, sizeof(sdo_rx_data_buffer));
 						uint8_t sdo_tx_data_buffer[4] = {0xAA, 0xBB, 0xCC, 0xDD};
 						uint8_t sdo_tx_data_byte = 1;
 						uint8_t sdo_tx_data_byte_2 = 0;
 					//	const twai_message_t msg_buffer = {.identifier = 0x61A, .data_length_code = 8, .data = {0x4C, 0x08,  0x10, 0x00, 0x00, 0x00, 0x00, 0x00} };
-					
+					ESP_LOGE("mainTask", "Slave device name: %c %c %c %c %c %c %c %c %c %c %c %c %c\n\r ", 
+																													sdo_rx_data_buffer[0],
+																													sdo_rx_data_buffer[1],
+																													sdo_rx_data_buffer[2],
+																													sdo_rx_data_buffer[3],
+																													sdo_rx_data_buffer[4],
+																													sdo_rx_data_buffer[5],
+																													sdo_rx_data_buffer[6],
+																													sdo_rx_data_buffer[7],
+																													sdo_rx_data_buffer[8],
+																													sdo_rx_data_buffer[9],
+																													sdo_rx_data_buffer[10],
+																													sdo_rx_data_buffer[11],
+																													sdo_rx_data_buffer[12]
+																													);
 				int i = 0;
 				int k = 0;
 				while (reset == CO_RESET_NOT)
@@ -131,20 +146,20 @@ void mainTask(void *pvParameter)
 							CO_SDOclientUploadInitiate(CO->SDOclient[0], 0x1008, 0, sdo_rx_data_buffer, len, 0);
 							int j = dunker_coProcessUploadSDO();
 
-							ESP_LOGE("mainTask", "Slave device name: %c \n\r Error:  %d", 
-																													sdo_rx_data_buffer[len],
-																													// sdo_rx_data_buffer[1],
-																													// sdo_rx_data_buffer[2],
-																													// sdo_rx_data_buffer[3],
-																													// sdo_rx_data_buffer[4],
-																													// sdo_rx_data_buffer[5],
-																													// sdo_rx_data_buffer[6],
-																													// sdo_rx_data_buffer[7],
-																													// sdo_rx_data_buffer[8],
-																													// sdo_rx_data_buffer[9],
-																													// sdo_rx_data_buffer[10],
-																													// sdo_rx_data_buffer[11],
-																													// sdo_rx_data_buffer[12],
+							ESP_LOGE("mainTask", "Slave device name: %c %c %c %c %c %c %c %c %c %c %c %c %c\n\r Error:  %d", 
+																													sdo_rx_data_buffer[0],
+																													sdo_rx_data_buffer[1],
+																													sdo_rx_data_buffer[2],
+																													sdo_rx_data_buffer[3],
+																													sdo_rx_data_buffer[4],
+																													sdo_rx_data_buffer[5],
+																													sdo_rx_data_buffer[6],
+																													sdo_rx_data_buffer[7],
+																													sdo_rx_data_buffer[8],
+																													sdo_rx_data_buffer[9],
+																													sdo_rx_data_buffer[10],
+																													sdo_rx_data_buffer[11],
+																													sdo_rx_data_buffer[12],
 																													j);
 						k = 0;
 						}
