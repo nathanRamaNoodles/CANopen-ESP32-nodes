@@ -115,21 +115,6 @@ void mainTask(void *pvParameter)
 						uint8_t sdo_tx_data_byte = 1;
 						uint8_t sdo_tx_data_byte_2 = 0;
 					//	const twai_message_t msg_buffer = {.identifier = 0x61A, .data_length_code = 8, .data = {0x4C, 0x08,  0x10, 0x00, 0x00, 0x00, 0x00, 0x00} };
-					ESP_LOGE("mainTask", "Slave device name: %c %c %c %c %c %c %c %c %c %c %c %c %c\n\r ", 
-																													sdo_rx_data_buffer[0],
-																													sdo_rx_data_buffer[1],
-																													sdo_rx_data_buffer[2],
-																													sdo_rx_data_buffer[3],
-																													sdo_rx_data_buffer[4],
-																													sdo_rx_data_buffer[5],
-																													sdo_rx_data_buffer[6],
-																													sdo_rx_data_buffer[7],
-																													sdo_rx_data_buffer[8],
-																													sdo_rx_data_buffer[9],
-																													sdo_rx_data_buffer[10],
-																													sdo_rx_data_buffer[11],
-																													sdo_rx_data_buffer[12]
-																													);
 				int i = 0;
 				int k = 0;
 				while (reset == CO_RESET_NOT)
@@ -163,16 +148,16 @@ void mainTask(void *pvParameter)
 																													j);
 						k = 0;
 						}
-						// if ( i == 10) {
-						// 	CO_SDOclientDownloadInitiate(CO->SDOclient[0], 0x6304,  0x00, &sdo_tx_data_byte, 1, 0);
-						// 	dunker_coProcessDownloadSDO(); 
-						// 	ESP_LOGE("mainTask", "data was downlaoded to server"); 
-						// } else if (i == 20) {
-						// 	CO_SDOclientDownloadInitiate(CO->SDOclient[0], 0x6304,  0x00, &sdo_tx_data_byte_2, 1, 0);
-						// 	dunker_coProcessDownloadSDO(); 
-						// 	ESP_LOGE("mainTask", "data was downlaoded to server");
-						// 	i = 0; 
-						// }																				
+						if ( i == 10) {
+							CO_SDOclientDownloadInitiate(CO->SDOclient[0], 0x6304,  0x00, &sdo_tx_data_byte, 1, 0);
+							dunker_coProcessDownloadSDO(); 
+							ESP_LOGE("mainTask", "data was downlaoded to server"); 
+						} else if (i == 20) {
+							CO_SDOclientDownloadInitiate(CO->SDOclient[0], 0x6304,  0x00, &sdo_tx_data_byte_2, 1, 0);
+							dunker_coProcessDownloadSDO(); 
+							ESP_LOGE("mainTask", "data was downlaoded to server");
+							i = 0; 
+						}																				
 						i++;
 						k++;	
 
