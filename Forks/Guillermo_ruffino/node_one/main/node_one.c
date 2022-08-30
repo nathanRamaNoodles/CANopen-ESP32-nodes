@@ -29,9 +29,34 @@
 #include "nvs.h"
 #include "nvs_flash.h"
 
-/*===============================CLI includes===================================*/
-static const char* TAG = "example";
+#include "freertos/queue.h"
+#include "sdkconfig.h"
+#include "esp_intr_alloc.h"
+
+
+#if CONFIG_IDF_TARGET_ESP32
+    #include "esp32/rom/uart.h"
+#elif CONFIG_IDF_TARGET_ESP32S2
+    #include "esp32s2/rom/uart.h"
+#endif
+
+#define EX_UART_NUM UART_NUM_0
+#define PATTERN_CHR_NUM    (3)         /*!< Set the number of consecutive and identical characters received by receiver which defines a UART pattern*/
+
+#define BUF_SIZE (1024)
+#define RD_BUF_SIZE (BUF_SIZE)
+static QueueHandle_t uart0_queue;
+
+static intr_handle_t handle_console;
+
+uint8_t rxbuf[256];
+// Register to collect data length
+uint16_t urxlen;
+
 #define PROMPT_STR CONFIG_IDF_TARGET
+
+
+static const char* TAG = "example";
 
 /* Console command history can be stored to and loaded from a file.
  * The easiest way to do this is to use FATFS filesystem on top of
@@ -57,87 +82,9 @@ static void initialize_filesystem(void)
 }
 #endif // CONFIG_STORE_HISTORY
 
-static void initialize_nvs(void)
-{
-    esp_err_t err = nvs_flash_init();
-    if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-        ESP_ERROR_CHECK( nvs_flash_erase() );
-        err = nvs_flash_init();
-    }
-    ESP_ERROR_CHECK(err);
-}
-
-static void initialize_console(void)
-{
-    /* Drain stdout before reconfiguring it */
-    fflush(stdout);
-    fsync(fileno(stdout));
-
-    /* Disable buffering on stdin */
-    setvbuf(stdin, NULL, _IONBF, 0);
-
-    /* Minicom, screen, idf_monitor send CR when ENTER key is pressed */
-    esp_vfs_dev_uart_port_set_rx_line_endings(CONFIG_ESP_CONSOLE_UART_NUM, ESP_LINE_ENDINGS_CR);
-    /* Move the caret to the beginning of the next line on '\n' */
-    esp_vfs_dev_uart_port_set_tx_line_endings(CONFIG_ESP_CONSOLE_UART_NUM, ESP_LINE_ENDINGS_CRLF);
-
-    /* Configure UART. Note that REF_TICK is used so that the baud rate remains
-     * correct while APB frequency is changing in light sleep mode.
-     */
-    const uart_config_t uart_config = {
-            .baud_rate = CONFIG_ESP_CONSOLE_UART_BAUDRATE,
-            .data_bits = UART_DATA_8_BITS,
-            .parity = UART_PARITY_DISABLE,
-            .stop_bits = UART_STOP_BITS_1,
-#if CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32S2
-        .source_clk = UART_SCLK_REF_TICK,
-#else
-        .source_clk = UART_SCLK_XTAL,
-#endif
-    };
-    /* Install UART driver for interrupt-driven reads and writes */
-    ESP_ERROR_CHECK( uart_driver_install(CONFIG_ESP_CONSOLE_UART_NUM,
-            256, 0, 0, NULL, 0) );
-    ESP_ERROR_CHECK( uart_param_config(CONFIG_ESP_CONSOLE_UART_NUM, &uart_config) );
-
-    /* Tell VFS to use UART driver */
-    esp_vfs_dev_uart_use_driver(CONFIG_ESP_CONSOLE_UART_NUM);
-
-    /* Initialize the console */
-    esp_console_config_t console_config = {
-            .max_cmdline_args = 8,
-            .max_cmdline_length = 256,
-#if CONFIG_LOG_COLORS
-            .hint_color = atoi(LOG_COLOR_CYAN)
-#endif
-    };
-    ESP_ERROR_CHECK( esp_console_init(&console_config) );
-
-    /* Configure linenoise line completion library */
-    /* Enable multiline editing. If not set, long commands will scroll within
-     * single line.
-     */
-    linenoiseSetMultiLine(1);
-
-    /* Tell linenoise where to get command completions and hints */
-    linenoiseSetCompletionCallback(&esp_console_get_completion);
-    linenoiseSetHintsCallback((linenoiseHintsCallback*) &esp_console_get_hint);
-
-    /* Set command history size */
-    linenoiseHistorySetMaxLen(100);
-
-    /* Don't return empty lines */
-    linenoiseAllowEmpty(false);
-
-#if CONFIG_STORE_HISTORY
-    /* Load command history from filesystem */
-    linenoiseHistoryLoad(HISTORY_PATH);
-#endif
-}
-
 
 /*=================================================================================*/
-
+char* line ;
 
 
 /*=============================================CANBUS COnfigs==================================================================*/
@@ -170,16 +117,125 @@ esp_timer_create_args_t coMainTaskArgs;
 //Timer Handle
 esp_timer_handle_t periodicTimer;
 
+
+
+/*=================UART INTERUPT==========================================*/
+static void IRAM_ATTR uart_intr_handle(void *arg)
+{
+  uint16_t rx_fifo_len, status;
+  uint16_t i = 0;
+  
+  status = UART0.int_st.val; // read UART interrupt Status
+  rx_fifo_len = UART0.status.rxfifo_cnt; // read number of bytes in UART buffer
+  
+  	
+  while(rx_fifo_len){
+	
+   rxbuf[i++] = UART0.fifo.rw_byte; // read all bytes
+   rx_fifo_len--;
+ }
+ // after reading bytes from buffer clear UART interrupt status
+ uart_clear_intr_status(EX_UART_NUM, UART_RXFIFO_FULL_INT_CLR|UART_RXFIFO_TOUT_INT_CLR);
+
+// a test code or debug code to indicate UART receives successfully,
+// you can redirect received byte as echo also
+
+}
+
+/*===============================CLI includes===================================*/
+
+static void initialize_nvs(void)
+{
+    esp_err_t err = nvs_flash_init();
+    if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        ESP_ERROR_CHECK( nvs_flash_erase() );
+        err = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(err);
+}
+
+
+
+static void initialize_console(void)
+{
+    /* Drain stdout before reconfiguring it */
+    fflush(stdout);
+    fsync(fileno(stdout));
+
+    /* Disable buffering on stdin */
+    setvbuf(stdin, NULL, _IONBF, 0);
+
+    /* Minicom, screen, idf_monitor send CR when ENTER key is pressed */
+    esp_vfs_dev_uart_port_set_rx_line_endings(CONFIG_ESP_CONSOLE_UART_NUM, ESP_LINE_ENDINGS_CR);
+    /* Move the caret to the beginning of the next line on '\n' */
+    esp_vfs_dev_uart_port_set_tx_line_endings(CONFIG_ESP_CONSOLE_UART_NUM, ESP_LINE_ENDINGS_CRLF);
+
+    /* Configure UART. Note that REF_TICK is used so that the baud rate remains
+     * correct while APB frequency is changing in light sleep mode.
+     */
+    const uart_config_t uart_config = {
+            .baud_rate = CONFIG_ESP_CONSOLE_UART_BAUDRATE,
+            .data_bits = UART_DATA_8_BITS,
+            .parity = UART_PARITY_DISABLE,
+            .stop_bits = UART_STOP_BITS_1,
+#if CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32S2
+        .source_clk = UART_SCLK_REF_TICK,
+#else
+        .source_clk = UART_SCLK_XTAL,
+#endif
+    };
+    /* Install UART driver for interrupt-driven reads and writes */
+    ESP_ERROR_CHECK( uart_driver_install(CONFIG_ESP_CONSOLE_UART_NUM, BUF_SIZE * 2, 0, 0, NULL, 0) );
+
+	ESP_ERROR_CHECK(uart_isr_free(CONFIG_ESP_CONSOLE_UART_NUM));
+
+	ESP_ERROR_CHECK(uart_isr_register(CONFIG_ESP_CONSOLE_UART_NUM,uart_intr_handle, NULL, ESP_INTR_FLAG_IRAM, &handle_console));
+
+	ESP_ERROR_CHECK(uart_enable_rx_intr(CONFIG_ESP_CONSOLE_UART_NUM));
+
+    ESP_ERROR_CHECK( uart_param_config(CONFIG_ESP_CONSOLE_UART_NUM, &uart_config) );
+	
+	
+    /* Tell VFS to use UART driver */
+    esp_vfs_dev_uart_use_driver(CONFIG_ESP_CONSOLE_UART_NUM);
+
+    /* Initialize the console */
+    esp_console_config_t console_config = {
+            .max_cmdline_args = 8,
+            .max_cmdline_length = 256,
+#if CONFIG_LOG_COLORS
+            .hint_color = atoi(LOG_COLOR_CYAN)
+#endif
+    };
+    ESP_ERROR_CHECK( esp_console_init(&console_config) );
+
+    /* Configure linenoise line completion library */
+    /* Enable multiline editing. If not set, long commands will scroll within
+     * single line.
+     */
+    linenoiseSetMultiLine(1);
+
+    /* Tell linenoise where to get command completions and hints */
+    linenoiseSetCompletionCallback(&esp_console_get_completion);
+    linenoiseSetHintsCallback((linenoiseHintsCallback*) &esp_console_get_hint);
+
+    /* Set command history size */
+    linenoiseHistorySetMaxLen(100);
+
+    /* Don't return empty lines */
+    linenoiseAllowEmpty(true);
+
+#if CONFIG_STORE_HISTORY
+    /* Load command history from filesystem */
+    linenoiseHistoryLoad(HISTORY_PATH);
+#endif
+}
+
+
+
 void mainTask(void *pvParameter)
 {
 /*====================CMD init===============================================*/
-		initialize_nvs();
-#if CONFIG_STORE_HISTORY
-    initialize_filesystem();
-    ESP_LOGI(TAG, "Command history enabled");
-#else
-    ESP_LOGI(TAG, "Command history disabled");
-#endif
     initialize_console();
     /* Register commands */
     esp_console_register_help_command();
@@ -189,25 +245,26 @@ void mainTask(void *pvParameter)
      * This can be customized, made dynamic, etc.
      */
     const char* prompt = LOG_COLOR_I PROMPT_STR "> " LOG_RESET_COLOR;
-    printf("\n"
-           "CAN Open Master control CLI\n"
-           "Type 'help' to get the list of commands.\n"
-           "Use UP/DOWN arrows to navigate through command history.\n"
-           "Press TAB when typing command name to auto-complete.\n"
-           "Press Enter or Ctrl+C will terminate the console environment.\n");
+    // printf("\n"
+    //        "CAN Open Master control CLI\n"
+    //        "Type 'help' to get the list of commands.\n"
+    //        "Use UP/DOWN arrows to navigate through command history.\n"
+    //        "Press TAB when typing command name to auto-complete.\n"
+    //        "Press Enter or Ctrl+C will terminate the console environment.\n");
     /* Figure out if the terminal supports escape sequences */
     int probe_status = linenoiseProbe();
     if (probe_status) { /* zero indicates success */
-        printf("\r\n"
-               "Your terminal application does not support escape sequences.\n"
-               "Line editing and history features are disabled.\n"
-               "On Windows, try using Putty instead.\n");
+        // printf("\r\n"
+        //        "Your terminal application does not support escape sequences.\n"
+        //        "Line editing and history features are disabled.\n"
+        //        "On Windows, try using Putty instead.\n");
         linenoiseSetDumbMode(1);
 #if CONFIG_LOG_COLORS
         /* Since the terminal doesn't support escape sequences,
          * don't use color codes in the prompt.
          */
         prompt = PROMPT_STR "> ";
+		
 #endif //CONFIG_LOG_COLORS
     }
 /*================================================================================*/
@@ -218,6 +275,7 @@ void mainTask(void *pvParameter)
 		vTaskDelay(BOOT_WAIT / portTICK_PERIOD_MS);
 		while (reset != CO_RESET_APP)
 		{
+				ESP_LOGE("mainTask", "First while loop");
 				/* CANopen communication reset - initialize CANopen objects *******************/
 				CO_ReturnError_t err;
 				uint32_t coInterruptCounterPrevious;
@@ -295,6 +353,24 @@ void mainTask(void *pvParameter)
 				int k = 0;
 				while (reset == CO_RESET_NOT)
 				{
+/*============================CMD==============================*/
+		
+        // /* Try to run the command */
+		// ESP_LOGE("mainTask", "Got command line %s", line);
+        // int ret;
+        // esp_err_t err = esp_console_run(line, &ret);
+        // if (err == ESP_ERR_NOT_FOUND) {
+        //     printf("Unrecognized command\n");
+        // } else if (err == ESP_ERR_INVALID_ARG) {
+        //     // command was empty
+        // } else if (err == ESP_OK && ret != ESP_OK) {
+        //     printf("Command returned non-zero error code: 0x%x (%s)\n", ret, esp_err_to_name(ret));
+        // } else if (err != ESP_OK) {
+        //     printf("Internal error: %s\n", esp_err_to_name(err));
+        // }
+        // /* linenoise allocates line buffer on the heap, so need to free it */
+        // linenoiseFree(line);
+/*==========================================================*/
 						
 						/*download*/
 						// CO_SDOclientDownloadInitiate(CO->SDOclient[0], 0x1008, 0, sdo_rx_data_buffer, 13, 0);
@@ -406,35 +482,7 @@ void mainTask(void *pvParameter)
 						// }
 
 						/* Wait */
-/*============================CMD==============================*/
-						char* line = linenoise(prompt);
-        if (line == NULL) { /* Break on EOF or error */
-            break;
-        }
-        /* Add the command to the history if not empty*/
-        if (strlen(line) > 0) {
-            linenoiseHistoryAdd(line);
-#if CONFIG_STORE_HISTORY
-            /* Save command history to filesystem */
-            linenoiseHistorySave(HISTORY_PATH);
-#endif
-        }
 
-        /* Try to run the command */
-        int ret;
-        esp_err_t err = esp_console_run(line, &ret);
-        if (err == ESP_ERR_NOT_FOUND) {
-            printf("Unrecognized command\n");
-        } else if (err == ESP_ERR_INVALID_ARG) {
-            // command was empty
-        } else if (err == ESP_OK && ret != ESP_OK) {
-            printf("Command returned non-zero error code: 0x%x (%s)\n", ret, esp_err_to_name(ret));
-        } else if (err != ESP_OK) {
-            printf("Internal error: %s\n", esp_err_to_name(err));
-        }
-        /* linenoise allocates line buffer on the heap, so need to free it */
-        linenoiseFree(line);
-/*==========================================================*/
 						vTaskDelay(MAIN_WAIT / portTICK_PERIOD_MS);
 				}
 		}
@@ -472,3 +520,6 @@ void app_main()
 {
 		xTaskCreate(&mainTask, "mainTask", 4096, NULL, 5, NULL);
 }
+
+
+
