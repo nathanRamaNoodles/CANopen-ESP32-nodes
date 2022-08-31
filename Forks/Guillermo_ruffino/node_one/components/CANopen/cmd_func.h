@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdbool.h>
 /******************************************************************************
 * Exported definitions and macros
 ******************************************************************************/
@@ -23,7 +24,7 @@
 /******************************************************************************
 * Prototypes of exported functions
 ******************************************************************************/
-void CMD_GMILI_Send_Byte_To_Open (void);
-
+void CMD_Send_Byte_GIMLI_Control (bool state);
+void CMD_Send_Byte_Central_Control (bool state);
 
 #endif /*__cmd_func_H__*/

@@ -102,7 +102,7 @@ static int AT_OPEN (int argc, char **argv){
     uint8_t sdo_tx_data_gimli_open = 1;
     printf("Opening  GIMLI . . .\r\n");
     /*do  something*/
-    CMD_GMILI_Send_Byte_To_Open();
+    CMD_Send_Byte_GIMLI_Control(1);
     /*==============*/
     return 0;
 }
@@ -110,7 +110,7 @@ static int AT_OPEN (int argc, char **argv){
 static int AT_CLOSE (int argc, char **argv){
     printf("Closing  GIMLI . . .\r\n");
     /*do  something*/
-    
+    CMD_Send_Byte_GIMLI_Control(0);
     /*==============*/
     return 0;
 }
@@ -118,7 +118,7 @@ static int AT_CLOSE (int argc, char **argv){
 static int AT_PUSH (int argc, char **argv){
     printf("Pushing central support . . .\r\n");
     /*do  something*/
-    
+    CMD_Send_Byte_Central_Control(1);
     /*==============*/
     return 0;
 }
@@ -126,7 +126,7 @@ static int AT_PUSH (int argc, char **argv){
 static int AT_RELEASE (int argc, char **argv){
     printf("Releasing central support . . .\r\n");
     /*do  something*/
-    
+    CMD_Send_Byte_Central_Control(0);
     /*==============*/
     return 0;
 }
