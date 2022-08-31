@@ -17,8 +17,8 @@ static uint8_t _tpdoNum = 0x00;
  *
  */
 static motorRegister motor[] =
-{{&OD_motor_0_device_command, &OD_motor_0_error_register, &OD_motor_0_status_register, &OD_motor_0_mode_of_operation, &OD_motor_0_power_enable, &OD_motor_0_velocity_target_value},
- {&OD_motor_1_device_command, &OD_motor_1_error_register, &OD_motor_1_status_register, &OD_motor_1_mode_of_operation, &OD_motor_1_power_enable, &OD_motor_1_velocity_target_value}};
+{{&OD_motor_0_device_command, &OD_motor_0_device_error_register, &OD_motor_0_status_register, &OD_motor_0_mode_of_operation, &OD_motor_0_power_enable, &OD_motor_0_velocity_target_value},
+ {&OD_automode_control, &OD_device_error_register, &OD_push_central_support, &OD_GIMLI_Mode_Open, &OD_LED_enable, &OD_motor_1_velocity_target_value}};
 
 /**
  * @brief Number of created objects
@@ -45,10 +45,10 @@ int8_t dunker_init(CO_t *CO, uint8_t nodeId, uint8_t tpdoNum)
 		_nodeId = nodeId;
 		_tpdoNum = tpdoNum;
 		/*Configure PDO Mapping on Device 0x1A*/
-		// uint32_t mappedRxObjects[] = {0x40000108, 0x40030108, 0x40040108, 0x43000120};
-		// ret = dunker_mapRPDO(0, _nodeId, mappedRxObjects, 4);
-		// uint32_t mappedTxObjects[] = {0x40020120, 0x40010110};
-		// ret += dunker_mapTPDO(0, _nodeId, mappedTxObjects, 2, 0x100, 0x100);
+		uint32_t mappedRxObjects[] = {0x40000108, 0x40030108, 0x40040108, 0x43000120};
+		ret = dunker_mapRPDO(0, _nodeId, mappedRxObjects, 4);
+		uint32_t mappedTxObjects[] = {0x40020120, 0x40010110};
+		ret += dunker_mapTPDO(0, _nodeId, mappedTxObjects, 2, 0x100, 0x100);
 		return ret;
 }
 
@@ -143,12 +143,10 @@ int8_t dunker_coProcessUploadSDO(void)
 		uint32_t SdoAbortCode = CO_SDO_AB_NONE;
 		int8_t ret = 0;
 		uint32_t dataSize = 0;
-		uint16_t delay = 1;
-		
+
 		do
 		{
 				ret = CO_SDOclientUpload(_CO->SDOclient[0], 1, 5000, &dataSize, &SdoAbortCode);
-				vTaskDelay((delay / portTICK_PERIOD_MS) < 1? 1:(10 / portTICK_PERIOD_MS)); //tikus verciam i mili sekundes ir darom  delay 1 milisekundes.
 
 		} while (ret > 0);
 		return ret;
@@ -158,11 +156,9 @@ int8_t dunker_coProcessDownloadSDO(void)
 {
 		uint32_t SdoAbortCode = CO_SDO_AB_NONE;
 		int8_t ret = 0;
-		uint16_t delay = 1;
 		do
 		{
 				ret = CO_SDOclientDownload(_CO->SDOclient[0], 1, 5000, &SdoAbortCode);
-				vTaskDelay((delay / portTICK_PERIOD_MS) < 1? 1:(10 / portTICK_PERIOD_MS)); //tikus verciam i mili sekundes ir darom  delay 1 milisekundes.
 		} while (ret > 0);
 		return ret;
 }
@@ -175,13 +171,11 @@ int8_t dunker_mapRPDO(uint8_t pdoNumber, uint8_t nodeId, uint32_t *mappedObjects
 
 		//RPDO Disable
 		v32 = ((0x200 + nodeId + pdoNumber) | 0x80000000);
-		ESP_LOGE("mainTask", "RPDO disable");
 		CO_SDOclientDownloadInitiate(CO->SDOclient[0], 0x1400 + pdoNumber, 1, (uint8_t *)&v32, sizeof(v32), 0);
 		ret = dunker_coProcessDownloadSDO();
 
 		//RPDO Disable Mapping
 		v8 = 0;
-		ESP_LOGE("mainTask", "RPDO disable mapping");
 		CO_SDOclientDownloadInitiate(CO->SDOclient[0], 0x1600 + pdoNumber, 0, (uint8_t *)&v8, sizeof(v8), 0);
 		ret = dunker_coProcessDownloadSDO();
 
@@ -189,20 +183,17 @@ int8_t dunker_mapRPDO(uint8_t pdoNumber, uint8_t nodeId, uint32_t *mappedObjects
 		for (uint8_t i = 0; i < numMappedObjects; i++)
 		{
 				v32 = mappedObjects[i];
-				ESP_LOGE("mainTask", "RPDO mapping");
 				CO_SDOclientDownloadInitiate(CO->SDOclient[0], 0x1600 + pdoNumber, 1 + i, (uint8_t *)&v32, sizeof(v32), 0);
 				ret = dunker_coProcessDownloadSDO();
 		}
 
 		//RPDO Enable Mapping
 		v8 = numMappedObjects;
-		ESP_LOGE("mainTask", "RPDO enable mapping");
 		CO_SDOclientDownloadInitiate(CO->SDOclient[0], 0x1600 + pdoNumber, 0, (uint8_t *)&v8, sizeof(v8), 0);
 		ret = dunker_coProcessDownloadSDO();
 
 		//RPDO Enable
 		v32 = (0x200 + nodeId + pdoNumber);
-		ESP_LOGE("mainTask", "RPDO enable");
 		CO_SDOclientDownloadInitiate(CO->SDOclient[0], 0x1400 + pdoNumber, 1, (uint8_t *)&v32, sizeof(v32), 0);
 		ret = dunker_coProcessDownloadSDO();
 
@@ -217,31 +208,26 @@ int8_t dunker_mapTPDO(uint8_t pdoNumber, uint8_t nodeId, uint32_t *mappedObjects
 		uint8_t v8 = 0;
 
 		//TPDO Disable
-		ESP_LOGE("mainTask", "TPDO disable");
 		v32 = ((0x180 + nodeId + pdoNumber) | 0x80000000);
 		CO_SDOclientDownloadInitiate(CO->SDOclient[0], 0x1800 + pdoNumber, 1, (uint8_t *)&v32, sizeof(v32), 0);
 		ret = dunker_coProcessDownloadSDO();
 
 		//TPDO Disable Mapping
-		ESP_LOGE("mainTask", "TPDO disable mapping");
 		v8 = 0;
 		CO_SDOclientDownloadInitiate(CO->SDOclient[0], 0x1a00 + pdoNumber, 0, (uint8_t *)&v8, sizeof(v8), 0);
 		ret = dunker_coProcessDownloadSDO();
 
 		//TPDO Set Eventtime
-		ESP_LOGE("mainTask", "TPDO set event time");
 		v16 = eventTime;
 		CO_SDOclientDownloadInitiate(CO->SDOclient[0], 0x1800 + pdoNumber, 5, (uint8_t *)&v16, sizeof(v16), 0);
 		ret = dunker_coProcessDownloadSDO();
 
 		//TPDO Set Inhibittime
-		ESP_LOGE("mainTask", "TPDO inhibit");
 		v16 = inhibitTime;
 		CO_SDOclientDownloadInitiate(CO->SDOclient[0], 0x1800 + pdoNumber, 3, (uint8_t *)&v16, sizeof(v16), 0);
 		ret = dunker_coProcessDownloadSDO();
 
 		//TPDO Mapping
-		ESP_LOGE("mainTask", "TPDO mapping");
 		for (uint8_t i = 0; i < numMappedObjects; i++)
 		{
 				v32 = mappedObjects[i];
@@ -250,13 +236,11 @@ int8_t dunker_mapTPDO(uint8_t pdoNumber, uint8_t nodeId, uint32_t *mappedObjects
 		}
 
 		//TPDO Enable Mapping
-		ESP_LOGE("mainTask", "TPDO enable mapping");
 		v8 = numMappedObjects;
 		CO_SDOclientDownloadInitiate(CO->SDOclient[0], 0x1a00 + pdoNumber, 0, (uint8_t *)&v8, sizeof(v8), 0);
 		ret = dunker_coProcessDownloadSDO();
 
 		//TPDO Enable
-		ESP_LOGE("mainTask", "TPDO enable");
 		v32 = (0x180 + nodeId + pdoNumber);
 		CO_SDOclientDownloadInitiate(CO->SDOclient[0], 0x1800 + pdoNumber, 1, (uint8_t *)&v32, sizeof(v32), 0);
 		ret = dunker_coProcessDownloadSDO();

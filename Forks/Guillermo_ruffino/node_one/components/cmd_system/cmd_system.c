@@ -23,8 +23,7 @@
 #include "freertos/task.h"
 #include "cmd_system.h"
 #include "sdkconfig.h"
-
-
+#include "C:/Users/Dominykas/Desktop/CANOpen/CANopen-ESP32-nodes/Forks/Guillermo_ruffino/node_one/components/CANopen/cmd_func.c"
 #define MAX_MOTOR_NO 3
 
 #ifdef CONFIG_FREERTOS_USE_STATS_FORMATTING_FUNCTIONS
@@ -100,9 +99,10 @@ static int AT (int argc, char **argv){
 }
 
 static int AT_OPEN (int argc, char **argv){
+    uint8_t sdo_tx_data_gimli_open = 1;
     printf("Opening  GIMLI . . .\r\n");
     /*do  something*/
-    
+    CMD_GMILI_Send_Byte_To_Open();
     /*==============*/
     return 0;
 }

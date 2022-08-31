@@ -493,23 +493,19 @@
         #define OD_6100_7_hatox_status_register_digital_data_1      7
 
 /*6101 */
-        #define OD_6101_hatox_command_register                      0x6101
+        #define OD_6101_motor_current_readings                     0x6101
 
-        #define OD_6101_0_hatox_command_register_maxSubIndex        0
-        #define OD_6101_1_hatox_command_register_line               1
-        #define OD_6101_2_hatox_command_register_column             2
-        #define OD_6101_3_hatox_command_register_char_0             3
-        #define OD_6101_4_hatox_command_register_char_1             4
-        #define OD_6101_5_hatox_command_register_char_2             5
-        #define OD_6101_6_hatox_command_register_char_3             6
-        #define OD_6101_7_hatox_command_register_char_4             7
-        #define OD_6101_8_hatox_command_register_char_5             8
+        #define OD_6101_0_motor_current_readings_maxSubIndex        0
+        #define OD_6101_1_motor_current_readings_motor1             1
+        #define OD_6101_2_motor_current_readings_motor2             2
+        #define OD_6101_3_motor_current_readings_motor3             3
+        #define OD_6101_3_motor_current_readings_motor4             4
 
 /*6200 */
         #define OD_6200_motor_0_device_command                      0x6200
 
 /*6201 */
-        #define OD_6201_motor_0_error_register                      0x6201
+        #define OD_6201_motor_0_device_error_register                      0x6201
 
 /*6202 */
         #define OD_6202_motor_0_status_register                     0x6202
@@ -524,10 +520,10 @@
         #define OD_6205_motor_0_velocity_target_value               0x6205
 
 /*6300 */
-        #define OD_6300_motor_1_device_command                      0x6300
+        #define OD_6300_automode_control                            0x6300
 
 /*6301 */
-        #define OD_6301_motor_1_error_register                      0x6301
+        #define OD_6301_device_error_register                              0x6301
 
 /*6302 */
         #define OD_6302_motor_1_status_register                     0x6302
@@ -536,7 +532,7 @@
         #define OD_6303_motor_1_mode_of_operation                   0x6303
 
 /*6304 */
-        #define OD_6304_motor_1_power_enable                        0x6304
+        #define OD_6304_LED_enable                                  0x6304
 
 /*6305 */
         #define OD_6305_motor_1_velocity_target_value               0x6305
@@ -588,18 +584,18 @@ struct sCO_OD_RAM{
 /*6003      */ REAL32          gyro_angle_register[1];
 /*6004      */ UNSIGNED8       gyro_lifecounter_register[1];
 /*6100      */ UNSIGNED8       hatox_status_register[7];
-/*6101      */ UNSIGNED8       hatox_command_register[8];
+/*6101      */ UNSIGNED8       motor_current_readings[4];   //store  current readings of all 4 motors
 /*6200      */ UNSIGNED8       motor_0_device_command;
-/*6201      */ INTEGER16       motor_0_error_register;
+/*6201      */ INTEGER16       motor_0_device_error_register;
 /*6202      */ UNSIGNED32      motor_0_status_register;
 /*6203      */ UNSIGNED8       motor_0_mode_of_operation;
 /*6204      */ UNSIGNED8       motor_0_power_enable;
 /*6205      */ INTEGER32       motor_0_velocity_target_value;
-/*6300      */ UNSIGNED8       motor_1_device_command;
-/*6301      */ INTEGER16       motor_1_error_register;
-/*6302      */ UNSIGNED32      motor_1_status_register;
-/*6303      */ UNSIGNED8       motor_1_mode_of_operation;
-/*6304      */ UNSIGNED8       motor_1_power_enable;
+/*6300      */ UNSIGNED8       automode_control;        //SET to turn on automode for GIMLI and central support / RESET to turn off automode for GIMLI and central support
+/*6301      */ INTEGER8        device_error_register;   //Store bit error flags
+/*6302      */ UNSIGNED8       push_central_support;    //SET to push central support / RESET - to release central support
+/*6303      */ UNSIGNED8       GIMLI_Mode_Open;         //SET to close Gimli/RESET to open it
+/*6304      */ UNSIGNED8       LED_enable;              //1-turn LED ON / 0-turn LED off
 /*6305      */ INTEGER32       motor_1_velocity_target_value;
 
                UNSIGNED32     LastWord;
@@ -746,23 +742,20 @@ extern struct sCO_OD_EEPROM CO_OD_EEPROM;
         #define ODA_hatox_status_register_digital_data_0            5
         #define ODA_hatox_status_register_digital_data_1            6
 
-/*6101, Data Type: UNSIGNED8, Array[8] */
-        #define OD_hatox_command_register                           CO_OD_RAM.hatox_command_register
-        #define ODL_hatox_command_register_arrayLength              8
-        #define ODA_hatox_command_register_line                     0
-        #define ODA_hatox_command_register_column                   1
-        #define ODA_hatox_command_register_char_0                   2
-        #define ODA_hatox_command_register_char_1                   3
-        #define ODA_hatox_command_register_char_2                   4
-        #define ODA_hatox_command_register_char_3                   5
-        #define ODA_hatox_command_register_char_4                   6
-        #define ODA_hatox_command_register_char_5                   7
+/*6101, Data Type: UNSIGNED8, Array[4] */
+        #define OD_motor_current_readings                         CO_OD_RAM.motor_current_readings
+        #define ODL_motor_current_readings_arrayLength            4
+        #define ODA_motor_current_readings_motor1                 0
+        #define ODA_motor_current_readings_motor2                 1
+        #define ODA_motor_current_readings_motor3                 2
+        #define ODA_motor_current_readings_motor4                 3
+      
 
 /*6200, Data Type: UNSIGNED8 */
         #define OD_motor_0_device_command                           CO_OD_RAM.motor_0_device_command
 
 /*6201, Data Type: INTEGER16 */
-        #define OD_motor_0_error_register                           CO_OD_RAM.motor_0_error_register
+        #define OD_motor_0_device_error_register                           CO_OD_RAM.motor_0_device_error_register
 
 /*6202, Data Type: UNSIGNED32 */
         #define OD_motor_0_status_register                          CO_OD_RAM.motor_0_status_register
@@ -777,19 +770,19 @@ extern struct sCO_OD_EEPROM CO_OD_EEPROM;
         #define OD_motor_0_velocity_target_value                    CO_OD_RAM.motor_0_velocity_target_value
 
 /*6300, Data Type: UNSIGNED8 */
-        #define OD_motor_1_device_command                           CO_OD_RAM.motor_1_device_command
+        #define OD_automode_control                                 CO_OD_RAM.automode_control
 
-/*6301, Data Type: INTEGER16 */
-        #define OD_motor_1_error_register                           CO_OD_RAM.motor_1_error_register
+/*6301, Data Type: INTEGER8 */
+        #define OD_device_error_register                                    CO_OD_RAM.device_error_register
 
-/*6302, Data Type: UNSIGNED32 */
-        #define OD_motor_1_status_register                          CO_OD_RAM.motor_1_status_register
+/*6302, Data Type: UNSIGNED8 */
+        #define OD_push_central_support                             CO_OD_RAM.push_central_support
 
 /*6303, Data Type: UNSIGNED8 */
-        #define OD_motor_1_mode_of_operation                        CO_OD_RAM.motor_1_mode_of_operation
+        #define OD_GIMLI_Mode_Open                                  CO_OD_RAM.GIMLI_Mode_Open
 
 /*6304, Data Type: UNSIGNED8 */
-        #define OD_motor_1_power_enable                             CO_OD_RAM.motor_1_power_enable
+        #define OD_LED_enable                                       CO_OD_RAM.LED_enable
 
 /*6305, Data Type: INTEGER32 */
         #define OD_motor_1_velocity_target_value                    CO_OD_RAM.motor_1_velocity_target_value

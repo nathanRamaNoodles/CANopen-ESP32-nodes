@@ -3,7 +3,9 @@
         {
             "name": "ESP32-C3",
             "includePath": [
-                "${default}"
+                "${default}",
+                "${workspaceFolder}/components/CANopen",
+                "${workspaceFolder}/components/cmd_system"
             ],
             "defines": [
                 "_DEBUG",

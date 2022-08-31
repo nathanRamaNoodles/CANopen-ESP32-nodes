@@ -32,7 +32,9 @@
         "esp_intr_alloc.h": "c",
         "gpio.h": "c",
         "uart.h": "c",
-        "uart_types.h": "c"
+        "uart_types.h": "c",
+        "dunker.h": "c",
+        "cmd_func.h": "c"
     },
     "C_Cpp.errorSquiggles": "Enabled"
 }

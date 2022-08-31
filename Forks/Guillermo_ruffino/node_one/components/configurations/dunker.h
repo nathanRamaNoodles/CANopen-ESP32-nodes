@@ -2,8 +2,8 @@
 #define DUNKER_H_
 
 #include <stdint.h>
-#include "CANopen.h"
-#include "CO_OD.h"
+#include "C:/Users/Dominykas/Desktop/CANOpen/CANopen-ESP32-nodes/Forks/Guillermo_ruffino/node_one/components/CANopen/CANopen.h"
+#include "C:/Users/Dominykas/Desktop/CANOpen/CANopen-ESP32-nodes/Forks/Guillermo_ruffino/node_one/components/CANopen/CO_OD.h"
 
 /*Constants*/
 static const uint32_t STAT_Enabled = (1 << 0);

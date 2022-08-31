@@ -55,8 +55,8 @@ struct sCO_OD_RAM CO_OD_RAM = {
 /*1005*/ 0x0080L,
 /*1006*/ 0x0000L,
 /*1007*/ 0x0000L,
-/*1008*/ {'I', 'M', 'S', 'L', '-', 'E', 'S', 'P', '-', 'N', 'o', 'd', 'e'},
-/*1009*/ {'1', '.', '0', '0'},
+/*1008*/ {'E', 'S', 'P', '3', '2', '_', 'S', 'L', 'A', 'V', 'E', '-', '1'}, /* 45 53 50 33 32 5F 53 4C 41 56 45 2D 31  */
+/*1009*/ {'E', '-', '3', '9'},
 /*100a*/ {'1', '.', '0', '0'},
 /*1014*/ 0x0080L,
 /*1015*/ 0x64,
@@ -81,7 +81,7 @@ struct sCO_OD_RAM CO_OD_RAM = {
 /*6202*/ 0x0000L,
 /*6203*/ 0x0L,
 /*6204*/ 0x0L,
-/*6205*/ 0x0000L,   //velocity
+/*6205*/ 0x0000L,
 /*6300*/ 0x0L,
 /*6301*/ 0x00,
 /*6302*/ 0x0000L,
@@ -100,7 +100,6 @@ struct sCO_OD_EEPROM CO_OD_EEPROM = {
 
            CO_OD_FIRST_LAST_WORD,
 };
-
 
 
 
@@ -357,18 +356,18 @@ const CO_OD_entry_t CO_OD[57] = {
 {0x6003, 0x01, 0x8e, 4, (void*)&CO_OD_RAM.gyro_angle_register[0]},
 {0x6004, 0x01, 0x0e, 1, (void*)&CO_OD_RAM.gyro_lifecounter_register[0]},
 {0x6100, 0x07, 0x0e, 1, (void*)&CO_OD_RAM.hatox_status_register[0]},
-{0x6101, 0x08, 0x0e, 1, (void*)&CO_OD_RAM.hatox_command_register[0]},
+{0x6101, 0x04, 0x0e, 1, (void*)&CO_OD_RAM.motor_current_readings[0]},
 {0x6200, 0x00, 0x3e, 1, (void*)&CO_OD_RAM.motor_0_device_command},
-{0x6201, 0x00, 0xbe, 2, (void*)&CO_OD_RAM.motor_0_error_register},
+{0x6201, 0x00, 0xbe, 2, (void*)&CO_OD_RAM.motor_0_device_error_register},
 {0x6202, 0x00, 0xbe, 4, (void*)&CO_OD_RAM.motor_0_status_register},
 {0x6203, 0x00, 0x3e, 1, (void*)&CO_OD_RAM.motor_0_mode_of_operation},
 {0x6204, 0x00, 0x3e, 1, (void*)&CO_OD_RAM.motor_0_power_enable},
 {0x6205, 0x00, 0xbe, 4, (void*)&CO_OD_RAM.motor_0_velocity_target_value},
-{0x6300, 0x00, 0x3e, 1, (void*)&CO_OD_RAM.motor_1_device_command},
-{0x6301, 0x00, 0xbe, 2, (void*)&CO_OD_RAM.motor_1_error_register},
-{0x6302, 0x00, 0xbe, 4, (void*)&CO_OD_RAM.motor_1_status_register},
-{0x6303, 0x00, 0x3e, 1, (void*)&CO_OD_RAM.motor_1_mode_of_operation},
-{0x6304, 0x00, 0x3e, 1, (void*)&CO_OD_RAM.motor_1_power_enable},
+{0x6300, 0x00, 0x3e, 1, (void*)&CO_OD_RAM.automode_control},
+{0x6301, 0x00, 0x3e, 2, (void*)&CO_OD_RAM.device_error_register},
+{0x6302, 0x00, 0x3e, 1, (void*)&CO_OD_RAM.push_central_support},
+{0x6303, 0x00, 0x3e, 1, (void*)&CO_OD_RAM.GIMLI_Mode_Open},
+{0x6304, 0x00, 0x3e, 1, (void*)&CO_OD_RAM.LED_enable},
 {0x6305, 0x00, 0xbe, 4, (void*)&CO_OD_RAM.motor_1_velocity_target_value},
 };
 // clang-format on
