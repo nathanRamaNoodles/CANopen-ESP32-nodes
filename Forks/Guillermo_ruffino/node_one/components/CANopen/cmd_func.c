@@ -90,8 +90,8 @@ uint8_t CMD_Request_Upload_Status  (void) {
         uint16_t OD_entry_len = 0;
 
         OD_entry_len =  CO_OD_Entry_Length(CO->SDO[0], GIMLI_CENTRAL_SUPPORT_SATE_OD_INDEX, GIMLI_CENTRAL_SUPPORT_SATE_OD_SUBINDEX);
-        OD_entry_len += 3;
-		uint8_t sdo_rx_data_buffer[OD_entry_len];
+        OD_entry_len += 3;  //OD nuskaitymui is slave irenginio reikia  bent 4 baitu, nors OD dydis ir 1baito dydzio
+ 		uint8_t sdo_rx_data_buffer[OD_entry_len];
 		memset(sdo_rx_data_buffer, 0, sizeof(sdo_rx_data_buffer));
 
         CO_SDOclientUploadInitiate(CO->SDOclient[0], GIMLI_CENTRAL_SUPPORT_SATE_OD_INDEX, GIMLI_CENTRAL_SUPPORT_SATE_OD_SUBINDEX, sdo_rx_data_buffer, OD_entry_len, 0);
@@ -105,3 +105,4 @@ uint8_t CMD_Request_Upload_Status  (void) {
         
         return  received_state;
 }
+
