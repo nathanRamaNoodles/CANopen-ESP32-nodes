@@ -196,14 +196,16 @@ static int AT_OBJECTSTATUS (int argc, char **argv) {
 }
 
 static int AT_AUTOMODE (int argc, char **argv) {
-    static bool is_auto_mode_set = 0;
+    static bool is_auto_mode_set = 1;
 
-    if (is_auto_mode_set == 0) {
+    if (is_auto_mode_set == 1) {
         printf("Auto mode set!\r\n");
-        is_auto_mode_set = 1;
-    } else if (is_auto_mode_set == 1) {
+        CMD_Send_Byte_Auto_Mode_Toggle(is_auto_mode_set);
+        is_auto_mode_set = 0;
+    } else if (is_auto_mode_set == 0) {
         printf("Auto mode disabled!\r\n");
-         is_auto_mode_set = 0;
+        CMD_Send_Byte_Auto_Mode_Toggle(is_auto_mode_set);
+         is_auto_mode_set = 1;
     }
     return 0;
 }

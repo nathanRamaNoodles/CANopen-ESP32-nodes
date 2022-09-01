@@ -20,6 +20,8 @@
 #define CENTRAL_SUPPORT_SATE_OD_INDEX           0x6302
 #define CENTRAL_SUPPORT_STATE_OD_SUBINDEX       0x00
 
+#define AUTO_MODE_CONTROL_OD_INDEX              0x6300
+#define AUTO_MODE_CONTROL_OD_SUBINDEX           0x00
 /******************************************************************************
 * Private types
 ******************************************************************************/
@@ -106,3 +108,21 @@ uint8_t CMD_Request_Upload_Status  (void) {
         return  received_state;
 }
 
+void CMD_Send_Byte_Auto_Mode_Toggle (bool state) {
+    uint8_t sdo_tx_auto_mode_enable = 1;
+    uint8_t sdo_tx_auto_mode_disable = 0;
+
+    if (state == 1) {
+        CO_SDOclientDownloadInitiate(CO->SDOclient[0], AUTO_MODE_CONTROL_OD_INDEX,  AUTO_MODE_CONTROL_OD_SUBINDEX, &sdo_tx_auto_mode_enable, 1, 0);
+	    int err =  dunker_coProcessDownloadSDO();
+        if  (err < 0 ) {
+            ESP_LOGE("CENTRAL_SUPPORT_CONTROL", "failed to send SDO\nError code: %d", err);
+        } 
+    } else if (state == 0) {
+        CO_SDOclientDownloadInitiate(CO->SDOclient[0], AUTO_MODE_CONTROL_OD_INDEX,  AUTO_MODE_CONTROL_OD_SUBINDEX, &sdo_tx_auto_mode_disable, 1, 0);
+	    int err =  dunker_coProcessDownloadSDO();
+        if  (err != 0 ) {
+            ESP_LOGE("CENTRAL_SUPPORT_CONTROL", "failed to send SDO\nError code: %d", err);
+        } 
+    }
+}
