@@ -45,10 +45,10 @@ int8_t dunker_init(CO_t *CO, uint8_t nodeId, uint8_t tpdoNum)
 		_nodeId = nodeId;
 		_tpdoNum = tpdoNum;
 		/*Configure PDO Mapping on Device 0x1A*/
-		uint32_t mappedRxObjects[] = {0x40000108, 0x40030108, 0x40040108, 0x43000120};
-		ret = dunker_mapRPDO(0, _nodeId, mappedRxObjects, 4);
-		uint32_t mappedTxObjects[] = {0x40020120, 0x40010110};
-		ret += dunker_mapTPDO(0, _nodeId, mappedTxObjects, 2, 0x100, 0x100);
+		// uint32_t mappedRxObjects[] = {0x40000108, 0x40030108, 0x40040108, 0x43000120};
+		// ret = dunker_mapRPDO(0, _nodeId, mappedRxObjects, 4);
+		// uint32_t mappedTxObjects[] = {0x40020120, 0x40010110};
+		// ret += dunker_mapTPDO(0, _nodeId, mappedTxObjects, 2, 0x100, 0x100);
 		return ret;
 }
 
