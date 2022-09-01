@@ -18,7 +18,7 @@ static uint8_t _tpdoNum = 0x00;
  */
 static motorRegister motor[] =
 {{&OD_motor_0_device_command, &OD_motor_0_device_error_register, &OD_motor_0_status_register, &OD_motor_0_mode_of_operation, &OD_motor_0_power_enable, &OD_motor_0_velocity_target_value},
- {&OD_automode_control, &OD_device_error_register, &OD_push_central_support, &OD_GIMLI_Mode_Open, &OD_LED_enable, &OD_motor_1_velocity_target_value}};
+ {&OD_automode_control, &OD_device_error_register, &OD_push_central_support, &OD_GIMLI_open, &OD_LED_enable, &OD_GIMLI_central_support_state}};
 
 /**
  * @brief Number of created objects

@@ -535,7 +535,7 @@
         #define OD_6304_LED_enable                                  0x6304
 
 /*6305 */
-        #define OD_6305_motor_1_velocity_target_value               0x6305
+        #define OD_6305_GIMLI_central_support_state               0x6305
 
 /*******************************************************************************
    STRUCTURES FOR VARIABLES IN DIFFERENT MEMORY LOCATIONS
@@ -594,9 +594,9 @@ struct sCO_OD_RAM{
 /*6300      */ UNSIGNED8       automode_control;        //SET to turn on automode for GIMLI and central support / RESET to turn off automode for GIMLI and central support
 /*6301      */ INTEGER8        device_error_register;   //Store bit error flags
 /*6302      */ UNSIGNED8       push_central_support;    //SET to push central support / RESET - to release central support
-/*6303      */ UNSIGNED8       GIMLI_Mode_Open;         //SET to close Gimli/RESET to open it
+/*6303      */ UNSIGNED8       GIMLI_open;         //SET to close Gimli/RESET to open it
 /*6304      */ UNSIGNED8       LED_enable;              //1-turn LED ON / 0-turn LED off
-/*6305      */ INTEGER32       motor_1_velocity_target_value;
+/*6305      */ UNSIGNED8       GIMLI_central_support_state;
 
                UNSIGNED32     LastWord;
 };
@@ -779,13 +779,13 @@ extern struct sCO_OD_EEPROM CO_OD_EEPROM;
         #define OD_push_central_support                             CO_OD_RAM.push_central_support
 
 /*6303, Data Type: UNSIGNED8 */
-        #define OD_GIMLI_Mode_Open                                  CO_OD_RAM.GIMLI_Mode_Open
+        #define OD_GIMLI_open                                  CO_OD_RAM.GIMLI_open
 
 /*6304, Data Type: UNSIGNED8 */
         #define OD_LED_enable                                       CO_OD_RAM.LED_enable
 
-/*6305, Data Type: INTEGER32 */
-        #define OD_motor_1_velocity_target_value                    CO_OD_RAM.motor_1_velocity_target_value
+/*6305, Data Type: UNSIGNED8 */
+        #define OD_GIMLI_central_support_state                    CO_OD_RAM.GIMLI_central_support_state
 
 #endif
 // clang-format on

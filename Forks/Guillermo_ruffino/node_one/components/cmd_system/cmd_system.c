@@ -132,14 +132,23 @@ static int AT_RELEASE (int argc, char **argv){
 }
 
 static int AT_CHECKSTATE (int argc, char **argv){
-    /*GIMLI STATUS*/
-    printf("Gimli is OPENED\r\n");
-    printf("Gimli is CLSOED\r\n");
-    /*CENTRAL SUPPORT STATUS*/
-    printf("Central support is PUSHED\r\n");
-    printf("Central support is RELEASED\r\n");
     /*do  something*/
-    
+    uint8_t state = CMD_Request_Upload_Status();
+    if (state  == 0) {
+        printf("Gimli is CLSOED\r\n");
+        printf("Central support is RELEASED\r\n");
+    } else if (state == 1) {
+        printf("Gimli is OPENED\r\n");
+        printf("Central support is RELEASED\r\n");
+    } else if (state == 2) {
+        printf("Central support is PUSHED\r\n");
+        printf("Gimli is CLSOED\r\n");
+    } else if (state == 3) {
+        printf("Gimli is OPENED\r\n");
+        printf("Central support is PUSHED\r\n");
+    } else {
+         printf("Status error\r\n");
+    }
     /*==============*/
     return 0;
 }

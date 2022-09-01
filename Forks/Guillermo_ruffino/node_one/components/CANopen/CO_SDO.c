@@ -1566,5 +1566,6 @@ uint16_t CO_OD_Entry_Length(CO_SDO_t *SDO, uint16_t index, uint8_t subindex) {
         return 0;     /* Sub-index does not exist. */
     }
     length = CO_OD_getLength(SDO, SDO->entryNo, subindex);
+     ESP_LOGE("size", "length is %d", length);
     return length;
 }

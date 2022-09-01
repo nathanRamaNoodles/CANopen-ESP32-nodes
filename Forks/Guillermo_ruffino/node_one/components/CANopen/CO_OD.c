@@ -366,8 +366,8 @@ const CO_OD_entry_t CO_OD[57] = {
 {0x6300, 0x00, 0x3e, 1, (void*)&CO_OD_RAM.automode_control},
 {0x6301, 0x00, 0x3e, 2, (void*)&CO_OD_RAM.device_error_register},
 {0x6302, 0x00, 0x3e, 1, (void*)&CO_OD_RAM.push_central_support},
-{0x6303, 0x00, 0x3e, 1, (void*)&CO_OD_RAM.GIMLI_Mode_Open},
+{0x6303, 0x00, 0x3e, 1, (void*)&CO_OD_RAM.GIMLI_open},
 {0x6304, 0x00, 0x3e, 1, (void*)&CO_OD_RAM.LED_enable},
-{0x6305, 0x00, 0xbe, 4, (void*)&CO_OD_RAM.motor_1_velocity_target_value},
+{0x6305, 0x00, 0x3e, 1, (void*)&CO_OD_RAM.GIMLI_central_support_state},
 };
 // clang-format on

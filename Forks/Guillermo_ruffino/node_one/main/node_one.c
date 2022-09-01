@@ -336,7 +336,7 @@ void mainTask(void *pvParameter)
 						/* CANopen process */
 					
 						uint16_t len = 0;
-						len =  CO_OD_Entry_Length(CO->SDO[0], 0x1008, 0x00);
+						len =  CO_OD_Entry_Length(CO->SDO[0], 0x6304, 0x00);
 						ESP_LOGE("maintask", "1008 OD Length: %d", len);
 						uint8_t sdo_rx_data_buffer[len];
 						memset(sdo_rx_data_buffer, 0, sizeof(sdo_rx_data_buffer));
@@ -373,29 +373,29 @@ void mainTask(void *pvParameter)
 						// dunker_coProcessDownloadSDO();
 						/* upload*/	
 						// request every 10 s
-						// if ((k % 100) == 0) {
-						// // twai_transmit(&msg_buffer, 1000);
-						// 	ESP_LOGE("maintask", "beggining of a While");
-						// 	CO_SDOclientUploadInitiate(CO->SDOclient[0], 0x1008, 0, sdo_rx_data_buffer, len, 0);
-						// 	int j = dunker_coProcessUploadSDO();
+						if ((k % 100) == 0) {
+						// twai_transmit(&msg_buffer, 1000);
+							ESP_LOGE("maintask", "beggining of a While");
+							CO_SDOclientUploadInitiate(CO->SDOclient[0], 0x6304, 0, sdo_rx_data_buffer, len, 0);
+							int j = dunker_coProcessUploadSDO();
 
-						// 	ESP_LOGE("mainTask", "Slave device name: %c %c %c %c %c %c %c %c %c %c %c %c %c\n\r Error:  %d", 
-						// 																							sdo_rx_data_buffer[0],
-						// 																							sdo_rx_data_buffer[1],
-						// 																							sdo_rx_data_buffer[2],
-						// 																							sdo_rx_data_buffer[3],
-						// 																							sdo_rx_data_buffer[4],
-						// 																							sdo_rx_data_buffer[5],
-						// 																							sdo_rx_data_buffer[6],
-						// 																							sdo_rx_data_buffer[7],
-						// 																							sdo_rx_data_buffer[8],
-						// 																							sdo_rx_data_buffer[9],
-						// 																							sdo_rx_data_buffer[10],
-						// 																							sdo_rx_data_buffer[11],
-						// 																							sdo_rx_data_buffer[12],
-						// 																							j);
-						// k = 0;
-						// }
+							ESP_LOGE("mainTask", "Slave device name: %c %c %c %c %c %c %c %c %c %c %c %c %c\n\r Error:  %d", 
+																													sdo_rx_data_buffer[0],
+																													sdo_rx_data_buffer[1],
+																													sdo_rx_data_buffer[2],
+																													sdo_rx_data_buffer[3],
+																													sdo_rx_data_buffer[4],
+																													sdo_rx_data_buffer[5],
+																													sdo_rx_data_buffer[6],
+																													sdo_rx_data_buffer[7],
+																													sdo_rx_data_buffer[8],
+																													sdo_rx_data_buffer[9],
+																													sdo_rx_data_buffer[10],
+																													sdo_rx_data_buffer[11],
+																													sdo_rx_data_buffer[12],
+																													j);
+						k = 0;
+						}
 						// if ( i == 10) {
 						// 	CO_SDOclientDownloadInitiate(CO->SDOclient[0], 0x6303,  0x00, &sdo_tx_data_byte, 1, 0);
 						// 	dunker_coProcessDownloadSDO(); 
@@ -407,7 +407,7 @@ void mainTask(void *pvParameter)
 						// 	i = 0; 
 						// }																				
 						// i++;
-						// k++;	
+						k++;	
 
 							// if ((i % 150) == 0) {
 							// 	CO_SDOclientUploadInitiate(CO->SDOclient[0], 0x6305, 0x00, sdo_rx_data_buffer, 13, 0);

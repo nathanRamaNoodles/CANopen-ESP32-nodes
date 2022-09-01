@@ -24,7 +24,7 @@
 /******************************************************************************
 * Prototypes of exported functions
 ******************************************************************************/
-void CMD_Send_Byte_GIMLI_Control (bool state);
+void CMD_Send_Byte_GIMLI_Control   (bool state);
 void CMD_Send_Byte_Central_Control (bool state);
-
+uint8_t CMD_Request_Upload_Status  (void);
 #endif /*__cmd_func_H__*/
