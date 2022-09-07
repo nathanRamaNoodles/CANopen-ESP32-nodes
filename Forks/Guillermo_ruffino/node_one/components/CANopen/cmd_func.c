@@ -22,6 +22,13 @@
 
 #define AUTO_MODE_CONTROL_OD_INDEX              0x6300
 #define AUTO_MODE_CONTROL_OD_SUBINDEX           0x00
+
+#define CURRENT_MONITOR_ID              0x6101
+#define CURRENT_MONITOR_DRIVER_1_SUBID  0X01
+#define CURRENT_MONITOR_DRIVER_2_SUBID  0X02
+#define CURRENT_MONITOR_DRIVER_3_SUBID  0X03
+#define CURRENT_MONITOR_DRIVER_4_SUBID  0X04
+#define CURRENT_MONITOR_DRIVER_5_SUBID  0X05
 /******************************************************************************
 * Private types
 ******************************************************************************/
@@ -125,4 +132,28 @@ void CMD_Send_Byte_Auto_Mode_Toggle (bool state) {
             ESP_LOGE("CENTRAL_SUPPORT_CONTROL", "failed to send SDO\nError code: %d", err);
         } 
     }
+}
+
+uint8_t CMD_Request_Upload_Current_of_selected_motor (uint8_t motor_no) {
+        float  received_current = 0;
+        uint16_t OD_entry_len = 0;
+
+        OD_entry_len =  CO_OD_Entry_Length(CO->SDO[0], CURRENT_MONITOR_ID, CURRENT_MONITOR_DRIVER_1_SUBID);
+        OD_entry_len += 3;  //OD nuskaitymui is slave irenginio reikia  bent 4 baitu, nors OD dydis ir 1baito dydzio
+ 		uint8_t sdo_rx_data_buffer[OD_entry_len];
+		memset(sdo_rx_data_buffer, 0, sizeof(sdo_rx_data_buffer));
+
+        CO_SDOclientUploadInitiate(CO->SDOclient[0], CURRENT_MONITOR_ID, CURRENT_MONITOR_DRIVER_1_SUBID, sdo_rx_data_buffer, OD_entry_len, 0);
+		//ESP_LOGE("Request_Status", "upload initiated, waitting for prodess");
+        int err = dunker_coProcessUploadSDO();
+       // ESP_LOGE("Request_Status", "Error code: %d", err);
+        if (err != 0) {
+            ESP_LOGE("Request_Status", "failed to send SDO\n Error code: %x", err);
+        }
+
+        //printf("current: %d %d %d %d in hex: %x %x %x %x/n", sdo_rx_data_buffer[0],sdo_rx_data_buffer[1],sdo_rx_data_buffer[2],sdo_rx_data_buffer[3], sdo_rx_data_buffer[0],sdo_rx_data_buffer[1],sdo_rx_data_buffer[2],sdo_rx_data_buffer[3]);
+        memcpy(&received_current, sdo_rx_data_buffer, sizeof(received_current));
+        printf("received current: %f\n", received_current);
+
+        return  received_current;
 }

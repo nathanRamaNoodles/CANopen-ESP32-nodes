@@ -1554,7 +1554,7 @@ int8_t CO_SDO_process(
 
 uint16_t CO_OD_Entry_Length(CO_SDO_t *SDO, uint16_t index, uint8_t subindex) {
     uint16_t length = 0;
-    ESP_LOGE("SDO_Process", "Object id %d and subid %d", index,  subindex);
+    ESP_LOGE("SDO_Process", "Object id %x and subid %x", index,  subindex);
     SDO->entryNo = CO_OD_find(SDO, index);
     if(SDO->entryNo == 0xFFFFU){
         ESP_LOGE("SDO_Process", "Object does not exist");
@@ -1566,6 +1566,7 @@ uint16_t CO_OD_Entry_Length(CO_SDO_t *SDO, uint16_t index, uint8_t subindex) {
         return 0;     /* Sub-index does not exist. */
     }
     length = CO_OD_getLength(SDO, SDO->entryNo, subindex);
+
      ESP_LOGE("size", "length is %d", length);
     return length;
 }
