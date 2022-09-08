@@ -24,7 +24,7 @@
 #include "cmd_system.h"
 #include "sdkconfig.h"
 #include "C:/Users/Dominykas/Desktop/CANOpen/CANopen-ESP32-nodes/Forks/Guillermo_ruffino/node_one/components/CANopen/cmd_func.c"
-#define MAX_MOTOR_NO 3
+#define MAX_MOTOR_NO 5
 
 #ifdef CONFIG_FREERTOS_USE_STATS_FORMATTING_FUNCTIONS
 #define WITH_TASKS_INFO 1
@@ -169,7 +169,7 @@ static int AT_CURRENT (int argc, char **argv){
         if (motor_no == 0) {
             ESP_LOGI(TAG, "Getting current measurement of all motors\n");
             /*do  something*/
-            CMD_Request_Upload_Current_of_selected_motor(motor_no);
+          float *current_reading = CMD_Request_Upload_Current_of_selected_motor(motor_no);
             /*==============*/
         }
         else if ((motor_no > 0) && (motor_no <= MAX_MOTOR_NO)) {
