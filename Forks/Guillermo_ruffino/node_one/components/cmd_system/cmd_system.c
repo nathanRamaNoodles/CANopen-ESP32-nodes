@@ -169,13 +169,13 @@ static int AT_CURRENT (int argc, char **argv){
         if (motor_no == 0) {
             ESP_LOGI(TAG, "Getting current measurement of all motors\n");
             /*do  something*/
-          float *current_reading = CMD_Request_Upload_Current_of_selected_motor(motor_no);
+          float *current_reading_all_motors = CMD_Request_Upload_Current_of_selected_motor(motor_no);
             /*==============*/
         }
         else if ((motor_no > 0) && (motor_no <= MAX_MOTOR_NO)) {
             ESP_LOGI(TAG, "Getting current measurement of %d motor\n", motor_no);
             /*do  something*/
-            CMD_Request_Upload_Current_of_selected_motor(motor_no);
+            float *current_reading = CMD_Request_Upload_Current_of_selected_motor(motor_no);
             /*==============*/
         }
         else {

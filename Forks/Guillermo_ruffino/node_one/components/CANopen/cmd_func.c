@@ -119,7 +119,7 @@ uint8_t CMD_Request_Upload_Status  (void) {
 
 void CMD_Send_Byte_Auto_Mode_Toggle (bool state) {
     uint8_t sdo_tx_auto_mode_enable = 1;
-    uint8_t sdo_tx_auto_mode_disable = 0;
+    uint8_t sdo_tx_auto_mode_disable = 2;
 
     if (state == 1) {
         CO_SDOclientDownloadInitiate(CO->SDOclient[0], AUTO_MODE_CONTROL_OD_INDEX,  AUTO_MODE_CONTROL_OD_SUBINDEX, &sdo_tx_auto_mode_enable, 1, 0);
