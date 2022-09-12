@@ -47,6 +47,7 @@ static void Register_AT_OPEN (void);
 static void Register_AT_CLOSE (void);
 static void Register_AT_PUSH (void);
 static void Register_AT_RELEASE (void);
+static void Register_AT_STOPALL (void);
 static void Register_AT_CHECKSTATE (void);
 static void Register_AT_CURRENT (void);
 static void Register_AT_OBJECT_STATUS (void);
@@ -85,13 +86,15 @@ void register_AT_commands(void) {
     Register_AT_CLOSE();
     Register_AT_PUSH();
     Register_AT_RELEASE();
+    Register_AT_STOPALL();
     Register_AT_CHECKSTATE();
     Register_AT_CURRENT();
     Register_AT_OBJECT_STATUS();
     Register_AT_AUTOMODE();
     Register_AT_GETSLAVEERROR();
     Register_AT_SETSLAVERRORPERIOD();
-}
+    //Register_AT_SENDCURRENTPERIOD();
+} 
 /*AT commands*/
 static int AT (int argc, char **argv){
     printf("OK\r\n");
@@ -127,6 +130,15 @@ static int AT_RELEASE (int argc, char **argv){
     printf("Releasing central support . . .\r\n");
     /*do  something*/
     CMD_Send_Byte_Central_Control(0);
+    /*==============*/
+    return 0;
+}
+
+static int AT_STOPALL (int argc, char **argv){
+    printf("Stopping all motors.\r\n");
+    /*do  something*/
+    CMD_Send_Byte_GIMLI_Control(3);
+    CMD_Send_Byte_Central_Control(3);
     /*==============*/
     return 0;
 }
@@ -286,6 +298,16 @@ static void Register_AT_RELEASE (void) {
         .help = "Release central support",
         .hint = NULL,
         .func = &AT_RELEASE,
+    };
+    ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
+}
+
+static void Register_AT_STOPALL (void) {
+    const esp_console_cmd_t cmd = {
+        .command = "AT+STOPALL",
+        .help = "STOP all motors from spinning",
+        .hint = NULL,
+        .func = &AT_STOPALL,
     };
     ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
 }
