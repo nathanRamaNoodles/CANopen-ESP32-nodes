@@ -43,8 +43,8 @@ static void register_tasks(void);
 #endif
 /* AT commands */
 static void Register_AT (void);
-static void Register_AT_OPEN (void);
-static void Register_AT_CLOSE (void);
+static void Register_AT_Release (void);
+static void Register_AT_Prepared (void);
 static void Register_AT_PUSH (void);
 static void Register_AT_RELEASE (void);
 static void Register_AT_STOPALL (void);
@@ -82,8 +82,8 @@ void register_system(void)
 
 void register_AT_commands(void) {
     Register_AT();
-    Register_AT_OPEN();
-    Register_AT_CLOSE();
+    Register_AT_Release();
+    Register_AT_Prepared();
     Register_AT_PUSH();
     Register_AT_RELEASE();
     Register_AT_STOPALL();
@@ -101,19 +101,43 @@ static int AT (int argc, char **argv){
     return 0;
 }
 
-static int AT_OPEN (int argc, char **argv){
+static int AT_Release (int argc, char **argv){
     uint8_t sdo_tx_data_gimli_open = 1;
-    printf("Opening  GIMLI . . .\r\n");
+    printf("Releasing GIMLI . . .\r\n");
+    /*do  something*/
+    CMD_Send_Byte_GIMLI_Control(0);
+    /*==============*/
+    return 0;
+}
+
+static int AT_Prepared (int argc, char **argv){
+    printf("Setting GIMLI to PREPARED state. . .\r\n");
     /*do  something*/
     CMD_Send_Byte_GIMLI_Control(1);
     /*==============*/
     return 0;
 }
 
-static int AT_CLOSE (int argc, char **argv){
-    printf("Closing  GIMLI . . .\r\n");
+static int AT_Caputre_B4_Contact (int argc, char **argv){
+    printf("Setting GIMLI to CAPTURE BEFORE CONTACT. . .\r\n");
     /*do  something*/
-    CMD_Send_Byte_GIMLI_Control(0);
+    CMD_Send_Byte_GIMLI_Control(2);
+    /*==============*/
+    return 0;
+}
+
+static int AT_Hard_Capture (int argc, char **argv){
+    printf("Setting GIMLI to HARD CAPTURE state. . .\r\n");
+    /*do  something*/
+    CMD_Send_Byte_GIMLI_Control(3);
+    /*==============*/
+    return 0;
+}
+
+static int AT_Prepared (int argc, char **argv){
+    printf("Stopping GIMLI . . .\r\n");
+    /*do  something*/
+    CMD_Send_Byte_GIMLI_Control(1);
     /*==============*/
     return 0;
 }
@@ -262,22 +286,22 @@ static void Register_AT (void) {
     ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
 }
 
-static void Register_AT_OPEN (void) {
+static void Register_AT_Release (void) {
      const esp_console_cmd_t cmd = {
-        .command = "AT+OPEN",
-        .help = "Open GIMLI",
+        .command = "AT+RELEASE",
+        .help = "Release GIMLI",
         .hint = NULL,
-        .func = &AT_OPEN,
+        .func = &AT_Release,
     };
     ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
 }
 
-static void Register_AT_CLOSE (void) {
+static void Register_AT_Prepared (void) {
     const esp_console_cmd_t cmd = {
-        .command = "AT+CLOSE",
-        .help = "Close GIMLI",
+        .command = "AT+PREPARED",
+        .help = "Set GIMLI to PREPARED state",
         .hint = NULL,
-        .func = &AT_CLOSE,
+        .func = &AT_Prepared,
     };
     ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
 }

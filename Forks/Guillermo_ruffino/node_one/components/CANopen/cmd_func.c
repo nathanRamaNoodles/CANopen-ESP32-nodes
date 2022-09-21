@@ -59,29 +59,12 @@ uint8_t current_measurement_motor_subid[NO_OF_MOTORS] = {0X01, 0x02, 0x03, 0x04,
 * Definitions of exported functions
 ******************************************************************************/
 void CMD_Send_Byte_GIMLI_Control (uint8_t state) {
-    uint8_t sdo_tx_data_GIMLI_open = 1;
-    uint8_t sdo_tx_data_GIMLI_close = 0;
-    uint8_t sdo_tx_data_GIMLI_stop = 3;
-
-    if (state == 1) {
-        CO_SDOclientDownloadInitiate(CO->SDOclient[0], GIMLI_SATE_OD_INDEX,  GIMLI_STATE_OD_SUBINDEX, &sdo_tx_data_GIMLI_open, 1, 0);
+   
+        CO_SDOclientDownloadInitiate(CO->SDOclient[0], GIMLI_SATE_OD_INDEX,  GIMLI_STATE_OD_SUBINDEX, &state, 1, 0);
 	    int err =  dunker_coProcessDownloadSDO();
         if  (err < 0 ) {
             ESP_LOGE("GIMLI_CONTROL", "failed to send SDO:\n err code: %d", err);
         } 
-    } else if (state == 0) {
-        CO_SDOclientDownloadInitiate(CO->SDOclient[0], GIMLI_SATE_OD_INDEX,  GIMLI_STATE_OD_SUBINDEX, &sdo_tx_data_GIMLI_close, 1, 0);
-	    int err =  dunker_coProcessDownloadSDO();
-        if  (err < 0 ) {
-            ESP_LOGE("GIMLI_CONTROL", "failed to send SDO:\n err code: %d", err);
-        } 
-    } else if (state == 3) {
-        CO_SDOclientDownloadInitiate(CO->SDOclient[0], GIMLI_SATE_OD_INDEX,  GIMLI_STATE_OD_SUBINDEX, &sdo_tx_data_GIMLI_stop, 1, 0);
-	    int err =  dunker_coProcessDownloadSDO();
-        if  (err < 0 ) {
-            ESP_LOGE("GIMLI_CONTROL", "failed to send SDO:\n err code: %d", err);
-        } 
-    }
 }
 
 void CMD_Send_Byte_Central_Control (uint8_t state) {
