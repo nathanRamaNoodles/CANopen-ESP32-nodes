@@ -45,8 +45,11 @@ static void register_tasks(void);
 static void Register_AT (void);
 static void Register_AT_Release (void);
 static void Register_AT_Prepared (void);
+static void Register_AT_Caputre_B4_Contact (void);
+static void Register_AT_Hard_Capture (void);
+static void Register_AT_STOP(void);
 static void Register_AT_PUSH (void);
-static void Register_AT_RELEASE (void);
+static void Register_AT_PULL (void);
 static void Register_AT_STOPALL (void);
 static void Register_AT_CHECKSTATE (void);
 static void Register_AT_CURRENT (void);
@@ -84,8 +87,11 @@ void register_AT_commands(void) {
     Register_AT();
     Register_AT_Release();
     Register_AT_Prepared();
+    Register_AT_Caputre_B4_Contact();
+    Register_AT_Hard_Capture();
+    Register_AT_STOP();
     Register_AT_PUSH();
-    Register_AT_RELEASE();
+    Register_AT_PULL();
     Register_AT_STOPALL();
     Register_AT_CHECKSTATE();
     Register_AT_CURRENT();
@@ -102,10 +108,9 @@ static int AT (int argc, char **argv){
 }
 
 static int AT_Release (int argc, char **argv){
-    uint8_t sdo_tx_data_gimli_open = 1;
-    printf("Releasing GIMLI . . .\r\n");
+    printf("Setting GIMLI to RELEASE state. . .\r\n");
     /*do  something*/
-    CMD_Send_Byte_GIMLI_Control(0);
+    CMD_Send_Byte_GIMLI_Control(1);
     /*==============*/
     return 0;
 }
@@ -113,7 +118,7 @@ static int AT_Release (int argc, char **argv){
 static int AT_Prepared (int argc, char **argv){
     printf("Setting GIMLI to PREPARED state. . .\r\n");
     /*do  something*/
-    CMD_Send_Byte_GIMLI_Control(1);
+    CMD_Send_Byte_GIMLI_Control(2);
     /*==============*/
     return 0;
 }
@@ -121,7 +126,7 @@ static int AT_Prepared (int argc, char **argv){
 static int AT_Caputre_B4_Contact (int argc, char **argv){
     printf("Setting GIMLI to CAPTURE BEFORE CONTACT. . .\r\n");
     /*do  something*/
-    CMD_Send_Byte_GIMLI_Control(2);
+    CMD_Send_Byte_GIMLI_Control(3);
     /*==============*/
     return 0;
 }
@@ -129,15 +134,15 @@ static int AT_Caputre_B4_Contact (int argc, char **argv){
 static int AT_Hard_Capture (int argc, char **argv){
     printf("Setting GIMLI to HARD CAPTURE state. . .\r\n");
     /*do  something*/
-    CMD_Send_Byte_GIMLI_Control(3);
+    CMD_Send_Byte_GIMLI_Control(4);
     /*==============*/
     return 0;
 }
 
-static int AT_Prepared (int argc, char **argv){
+static int AT_STOP (int argc, char **argv){
     printf("Stopping GIMLI . . .\r\n");
     /*do  something*/
-    CMD_Send_Byte_GIMLI_Control(1);
+    CMD_Send_Byte_GIMLI_Control(5);
     /*==============*/
     return 0;
 }
@@ -150,8 +155,8 @@ static int AT_PUSH (int argc, char **argv){
     return 0;
 }
 
-static int AT_RELEASE (int argc, char **argv){
-    printf("Releasing central support . . .\r\n");
+static int AT_PULL (int argc, char **argv){
+    printf("Pulling central support . . .\r\n");
     /*do  something*/
     CMD_Send_Byte_Central_Control(0);
     /*==============*/
@@ -306,6 +311,36 @@ static void Register_AT_Prepared (void) {
     ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
 }
 
+static void Register_AT_Caputre_B4_Contact (void) {
+    const esp_console_cmd_t cmd = {
+        .command = "AT+CAPTUREBEFORECONTACT",
+        .help = "Set GIMLI to CAPTURE BEFORE CONTACT state",
+        .hint = NULL,
+        .func = &AT_Caputre_B4_Contact,
+    };
+    ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
+}
+
+static void Register_AT_Hard_Capture(void) {
+    const esp_console_cmd_t cmd = {
+        .command = "AT+HARDCAPTURE",
+        .help = "Set GIMLI to HARD CAPTURE state",
+        .hint = NULL,
+        .func = &AT_Hard_Capture,
+    };
+    ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
+}
+
+static void Register_AT_STOP (void) {
+    const esp_console_cmd_t cmd = {
+        .command = "AT+STOP",
+        .help = "Set GIMLI to FULL STOP state",
+        .hint = NULL,
+        .func = &AT_STOP,
+    };
+    ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
+}
+
 static void Register_AT_PUSH (void) {
     const esp_console_cmd_t cmd = {
         .command = "AT+PUSH",
@@ -316,12 +351,12 @@ static void Register_AT_PUSH (void) {
     ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
 }
 
-static void Register_AT_RELEASE (void) {
+static void Register_AT_PULL (void) {
     const esp_console_cmd_t cmd = {
-        .command = "AT+RELEASE",
-        .help = "Release central support",
+        .command = "AT+PULL",
+        .help = "Pulling central support",
         .hint = NULL,
-        .func = &AT_RELEASE,
+        .func = &AT_PULL,
     };
     ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
 }
