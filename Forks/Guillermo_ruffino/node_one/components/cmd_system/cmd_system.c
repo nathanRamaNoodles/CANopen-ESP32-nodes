@@ -174,18 +174,28 @@ static int AT_STOPALL (int argc, char **argv){
 
 static int AT_CHECKSTATE (int argc, char **argv){
     /*do  something*/
-    uint8_t state = CMD_Request_Upload_Status();
-    if (state  == 0) {
-        printf("Gimli is CLSOED\r\n");
-        printf("Central support is RELEASED\r\n");
-    } else if (state == 1) {
-        printf("Gimli is OPENED\r\n");
-        printf("Central support is RELEASED\r\n");
-    } else if (state == 2) {
-        printf("Central support is PUSHED\r\n");
-        printf("Gimli is CLSOED\r\n");
-    } else if (state == 3) {
-        printf("Gimli is OPENED\r\n");
+    uint8_t state[2] = {0, 0};
+    CMD_Request_Upload_Status(state);
+
+    if (state[0]  == 1) {
+        printf("Gimli is RELEASED\r\n");
+    } else if (state[0] == 2) {
+        printf("Gimli is PREPARED\r\n");
+    } else if (state[0] == 3) {
+        printf("Gimli is CAPTURE BEFORE CONTACT\r\n");
+    } else if (state[0] == 4) {
+        printf("Gimli is HARD CAPTURE\r\n");
+    } else if (state[0] == 5) {
+        printf("Gimli is STOPPED\r\n");
+    } else if (state[0]  == 0) {
+        printf("Gimli is IDLE\r\n");
+    } else {
+         printf("Status error\r\n");
+    }
+
+    if (state[1] == 0) {
+         printf("Central support is RELEASED\r\n");
+    } else if (state[1] == 1) {
         printf("Central support is PUSHED\r\n");
     } else {
          printf("Status error\r\n");

@@ -43,6 +43,7 @@
 * Private variables
 ******************************************************************************/
 uint8_t current_measurement_motor_subid[NO_OF_MOTORS] = {0X01, 0x02, 0x03, 0x04, 0x05};
+uint8_t GIMLI_central_state_subid[2] = {0X01, 0x02};
 /******************************************************************************
 * Exported variables and references
 ******************************************************************************/
@@ -93,25 +94,29 @@ void CMD_Send_Byte_Central_Control (uint8_t state) {
     }
 }
 
-uint8_t CMD_Request_Upload_Status  (void) {
-        uint8_t received_state = 0;
+bool CMD_Request_Upload_Status  (uint8_t *data) {
         uint16_t OD_entry_len = 0;
+        uint8_t received_state[2] = {0,0};
 
         OD_entry_len =  CO_OD_Entry_Length(CO->SDO[0], GIMLI_CENTRAL_SUPPORT_SATE_OD_INDEX, GIMLI_CENTRAL_SUPPORT_SATE_OD_SUBINDEX);
         OD_entry_len += 3;  //OD nuskaitymui is slave irenginio reikia  bent 4 baitu, nors OD dydis ir 1baito dydzio
- 		uint8_t sdo_rx_data_buffer[OD_entry_len];
+ 		uint8_t sdo_rx_data_buffer[2];
 		memset(sdo_rx_data_buffer, 0, sizeof(sdo_rx_data_buffer));
 
-        CO_SDOclientUploadInitiate(CO->SDOclient[0], GIMLI_CENTRAL_SUPPORT_SATE_OD_INDEX, GIMLI_CENTRAL_SUPPORT_SATE_OD_SUBINDEX, sdo_rx_data_buffer, OD_entry_len, 0);
-		ESP_LOGE("Request_Status", "upload initiated, waitting for prodess");
-        int err = dunker_coProcessUploadSDO();
-        if (err != 0) {
-            ESP_LOGE("Request_Status", "failed to send SDO\n Error code: %d", err);
-            return received_state = 4;
+        for (int i = 0; i < 2; i++) {
+            CO_SDOclientUploadInitiate(CO->SDOclient[0], GIMLI_CENTRAL_SUPPORT_SATE_OD_INDEX, GIMLI_central_state_subid[i], sdo_rx_data_buffer, OD_entry_len, 0);
+		    ESP_LOGE("Request_Status", "upload initiated, waitting for prodess");
+            int err = dunker_coProcessUploadSDO();
+            if (err != 0) {
+                ESP_LOGE("Request_Status", "failed to send SDO\n Error code: %d", err);
+                return  0;
+            }
+
+            *(data + i) = sdo_rx_data_buffer[i];
         }
-        received_state = sdo_rx_data_buffer[0];
+
         
-        return  received_state;
+        return  1;
 }
 
 void CMD_Send_Byte_Auto_Mode_Toggle (bool state) {
