@@ -399,7 +399,7 @@ CO_SDOclient_return_t CO_SDOclientDownloadInitiate(
     /* empty receive buffer, reset timeout timer and send message */
     CLEAR_CANrxNew(SDO_C->CANrxNew);
     SDO_C->timeoutTimer = 0;
-    ESP_LOGE("download_init", "tx buffer: %x %x %x %x %x %x %x %x", SDO_C->CANtxBuff->data[0], SDO_C->CANtxBuff->data[1], SDO_C->CANtxBuff->data[2], SDO_C->CANtxBuff->data[3], SDO_C->CANtxBuff->data[4], SDO_C->CANtxBuff->data[5], SDO_C->CANtxBuff->data[6], SDO_C->CANtxBuff->data[7]); 
+    // ESP_LOGE("download_init", "tx buffer: %x %x %x %x %x %x %x %x", SDO_C->CANtxBuff->data[0], SDO_C->CANtxBuff->data[1], SDO_C->CANtxBuff->data[2], SDO_C->CANtxBuff->data[3], SDO_C->CANtxBuff->data[4], SDO_C->CANtxBuff->data[5], SDO_C->CANtxBuff->data[6], SDO_C->CANtxBuff->data[7]); 
     CO_CANsend(SDO_C->CANdevTx, SDO_C->CANtxBuff, 700);
 
     return CO_SDOcli_ok_communicationEnd;
@@ -764,7 +764,7 @@ CO_SDOclient_return_t CO_SDOclientUploadInitiate(
     SDO_C->CANtxBuff->data[2] = index >> 8;
     SDO_C->CANtxBuff->data[3] = subIndex;
 
-    ESP_LOGE("CO_CANmodule_init", "blockenable: %d", blockEnable);
+   // ESP_LOGE("CO_CANmodule_init", "blockenable: %d", blockEnable);
     if(blockEnable == 0){
         SDO_C->state = SDO_STATE_UPLOAD_INITIATED;
         SDO_C->CANtxBuff->data[0] = (CCS_UPLOAD_INITIATE<<5); //<<5 buvo
@@ -803,7 +803,7 @@ CO_SDOclient_return_t CO_SDOclientUploadInitiate(
     }
 
     /* empty receive buffer, reset timeout timer and send message */
-    ESP_LOGE("CO_CANmodule_it", "empty receive buffer, reset timeout");
+   // ESP_LOGE("CO_CANmodule_it", "empty receive buffer, reset timeout");
     CLEAR_CANrxNew(SDO_C->CANrxNew);
     SDO_C->timeoutTimer = 0;
     SDO_C->timeoutTimerBLOCK =0;

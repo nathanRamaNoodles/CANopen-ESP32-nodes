@@ -57,6 +57,8 @@ static void Register_AT_OBJECT_STATUS (void);
 static void Register_AT_AUTOMODE (void);
 static void Register_AT_GETSLAVEERROR (void);
 static void Register_AT_SETSLAVERRORPERIOD (void); 
+static void Register_AT_SPIN_FW (void);
+static void Register_AT_SPIN_BW (void);
 /*==============*/
 
 void register_system_common(void)
@@ -99,6 +101,8 @@ void register_AT_commands(void) {
     Register_AT_AUTOMODE();
     Register_AT_GETSLAVEERROR();
     Register_AT_SETSLAVERRORPERIOD();
+    Register_AT_SPIN_FW ();
+    Register_AT_SPIN_BW ();
     //Register_AT_SENDCURRENTPERIOD();
 } 
 /*AT commands*/
@@ -189,16 +193,20 @@ static int AT_CHECKSTATE (int argc, char **argv){
         printf("Gimli is STOPPED\r\n");
     } else if (state[0]  == 0) {
         printf("Gimli is IDLE\r\n");
-    } else {
-         printf("Status error\r\n");
+    } else if (state[0]  == 6) {
+        printf("ERROR: overcurrent!\r\n");
+    } else if (state[0]  == 7) {
+        printf("ERROR: time out!\r\n");
     }
 
     if (state[1] == 0) {
          printf("Central support is RELEASED\r\n");
     } else if (state[1] == 1) {
         printf("Central support is PUSHED\r\n");
-    } else {
-         printf("Status error\r\n");
+    } else if (state[1] == 6) {
+         printf("ERROR: overcurrent!\r\n");
+    } else if (state[1] == 7) {
+        printf("ERROR: time out!\r\n");
     }
     /*==============*/
     return 0;
@@ -290,6 +298,21 @@ static int AT_SETSLAVERRORPERIOD (int argc, char **argv) {
     return 0;
 }
 
+static int AT_SPIN_FW (int argc, char **argv) {
+    printf("Spinning all motors FORWARD for 250 ms. . .\r\n");
+    /*do  something*/
+    CMD_Send_Byte_GIMLI_Control(8);
+    /*==============*/
+    return 0;
+}
+
+static int AT_SPIN_BW (int argc, char **argv) {
+    printf("Spinning all motors BACKWARDS for 250 ms. . .\r\n");
+    /*do  something*/
+    CMD_Send_Byte_GIMLI_Control(9);
+    /*==============*/
+    return 0;
+}
 /*==========================AT commands init===============================*/
 static void Register_AT (void) {
      const esp_console_cmd_t cmd = {
@@ -449,6 +472,26 @@ static void Register_AT_SETSLAVERRORPERIOD (void) {
         .hint = NULL,
         .func = &AT_SETSLAVERRORPERIOD,
         .argtable = &error_period_ms_args
+    };
+    ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
+}
+
+static void Register_AT_SPIN_FW (void) {
+     const esp_console_cmd_t cmd = {
+        .command = "AT+SPIN_FW",
+        .help = "Spin all motors for 250 ms in forward direction",
+        .hint = NULL,
+        .func = &AT_SPIN_FW,
+    };
+    ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
+}
+
+static void Register_AT_SPIN_BW (void) {
+     const esp_console_cmd_t cmd = {
+        .command = "AT+SPIN_BW",
+        .help = "Spin all motors for 250 ms in backwards direction",
+        .hint = NULL,
+        .func = &AT_SPIN_BW,
     };
     ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
 }
