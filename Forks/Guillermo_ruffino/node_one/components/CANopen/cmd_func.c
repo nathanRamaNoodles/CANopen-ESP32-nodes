@@ -105,10 +105,10 @@ bool CMD_Request_Upload_Status  (uint8_t *data) {
 
         for (int i = 0; i < 2; i++) {
             CO_SDOclientUploadInitiate(CO->SDOclient[0], GIMLI_CENTRAL_SUPPORT_SATE_OD_INDEX, GIMLI_central_state_subid[i], sdo_rx_data_buffer, OD_entry_len, 0);
-		    ESP_LOGE("Request_Status", "upload initiated, waitting for prodess");
+		   // ESP_LOGE("Request_Status", "upload initiated, waitting for prodess");
             int err = dunker_coProcessUploadSDO();
             if (err != 0) {
-                ESP_LOGE("Request_Status", "failed to send SDO\n Error code: %d", err);
+             //   ESP_LOGE("Request_Status", "failed to send SDO\n Error code: %d", err);
                 return  0;
             }
 

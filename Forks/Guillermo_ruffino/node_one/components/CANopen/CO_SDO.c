@@ -641,8 +641,8 @@ uint32_t CO_SDO_initTransfer(CO_SDO_t *SDO, uint16_t index, uint8_t subIndex){
     SDO->ODF_arg.attribute = CO_OD_getAttribute(SDO, SDO->entryNo, subIndex);
     SDO->ODF_arg.pFlags = CO_OD_getFlagsPointer(SDO, SDO->entryNo, subIndex);
 
-    ESP_LOGE("SDO_Process", "OD data length: %d", SDO->ODF_arg.dataLength);
-    ESP_LOGE("SDO_Process", "OD attribute: %d", SDO->ODF_arg.attribute);
+   // ESP_LOGE("SDO_Process", "OD data length: %d", SDO->ODF_arg.dataLength);
+    // ESP_LOGE("SDO_Process", "OD attribute: %d", SDO->ODF_arg.attribute);
 
     SDO->ODF_arg.firstSegment = true;
     SDO->ODF_arg.lastSegment = true;
@@ -881,7 +881,7 @@ int8_t CO_SDO_process(
                 CO_SDO_abort(SDO, CO_SDO_AB_CMD);/* Client command specifier not valid or unknown. */
                 return -1;
             }
-             ESP_LOGE("SDO_Process", "Command specifier %d", CCS);
+            //  ESP_LOGE("SDO_Process", "Command specifier %d", CCS);
             /* init ODF_arg */
             index = SDO->CANrxData[2];
             index = index << 8 | SDO->CANrxData[1];
@@ -900,7 +900,7 @@ int8_t CO_SDO_process(
                     CO_SDO_abort(SDO, CO_SDO_AB_READONLY); /* attempt to write a read-only object */
                     return -1;
                 }
-                ESP_LOGE("SDO_Process", "Command specifier %d (if 1 download init if 6 download block)", CCS);
+                // ESP_LOGE("SDO_Process", "Command specifier %d (if 1 download init if 6 download block)", CCS);
                 /* set state machine to normal or block download */
                 if(CCS == CCS_DOWNLOAD_INITIATE){
                     state = CO_SDO_ST_DOWNLOAD_INITIATE;
@@ -952,7 +952,7 @@ int8_t CO_SDO_process(
     if(state == CO_SDO_ST_IDLE){
         return 0;
     }
-    ESP_LOGE("SDO_Process", "SDO state %d", state);
+    // ESP_LOGE("SDO_Process", "SDO state %d", state);
     /* state machine (buffer is freed (CLEAR_CANrxNew()) at the end) */
     switch(state){
         uint32_t abortCode;
@@ -1223,7 +1223,7 @@ int8_t CO_SDO_process(
             SDO->CANtxBuff->data[1] = SDO->CANrxData[1];
             SDO->CANtxBuff->data[2] = SDO->CANrxData[2];
             SDO->CANtxBuff->data[3] = SDO->CANrxData[3];
-            ESP_LOGE("SDO_Process", "total data length %d and data length: %d", SDO->ODF_arg.dataLengthTotal, SDO->ODF_arg.dataLength);
+            // ESP_LOGE("SDO_Process", "total data length %d and data length: %d", SDO->ODF_arg.dataLengthTotal, SDO->ODF_arg.dataLength);
             /* Expedited transfer */
             if(SDO->ODF_arg.dataLength <= 4U){
                 for(i=0U; i<SDO->ODF_arg.dataLength; i++)
@@ -1232,7 +1232,7 @@ int8_t CO_SDO_process(
                 SDO->CANtxBuff->data[0] = 0x43U | ((4U-SDO->ODF_arg.dataLength) << 2U);
                 SDO->state = CO_SDO_ST_IDLE;
                 
-                ESP_LOGE("SDO_Process", "SDO expedited state %d", state);
+                // ESP_LOGE("SDO_Process", "SDO expedited state %d", state);
                 sendResponse = true;
             }
 
@@ -1253,12 +1253,12 @@ int8_t CO_SDO_process(
                 }
 
                 /* send response */
-                ESP_LOGE("SDO_Process", "SDO segmented state %d", state);
+                // ESP_LOGE("SDO_Process", "SDO segmented state %d", state);
                 sendResponse = true;
             }
             break;
         }
-        ESP_LOGE("SDO_Process", "SDO state %d", state);
+        // ESP_LOGE("SDO_Process", "SDO state %d", state);
         case CO_SDO_ST_UPLOAD_SEGMENTED:{
             /* verify client command specifier */
             if((SDO->CANrxData[0]&0xE0U) != 0x60U){
@@ -1554,7 +1554,7 @@ int8_t CO_SDO_process(
 
 uint16_t CO_OD_Entry_Length(CO_SDO_t *SDO, uint16_t index, uint8_t subindex) {
     uint16_t length = 0;
-    ESP_LOGE("SDO_Process", "Object id %x and subid %x", index,  subindex);
+    // ESP_LOGE("SDO_Process", "Object id %x and subid %x", index,  subindex);
     SDO->entryNo = CO_OD_find(SDO, index);
     if(SDO->entryNo == 0xFFFFU){
         ESP_LOGE("SDO_Process", "Object does not exist");
